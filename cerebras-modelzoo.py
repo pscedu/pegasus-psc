@@ -16,6 +16,7 @@ import logging
 import os
 import shutil
 import sys
+import datetime
 
 from Pegasus.api import *
 
@@ -159,12 +160,13 @@ def generate_wf():
     wf.add_jobs(compile_job)
 
     # training job
+    now = datetime.datetime.now().strftime('%s')
     training_job = Job('train', node_label="train_model")
     training_job.add_args('--mode train --model_dir training_example_$SLURM_JOB_ID  --cs_ip $CS_IP_ADDR')
     training_job.add_inputs(modelzoo_compiled)
     training_job.add_outputs(modelzoo_trained, stage_out=True)
-    training_job.set_stdout("train.out")
-    training_job.set_stderr("train.err")
+    training_job.set_stdout("train-{}.out".format(now))
+    training_job.set_stderr("train-{}.err".format(now))
     wf.add_jobs(training_job)
 
     try:
