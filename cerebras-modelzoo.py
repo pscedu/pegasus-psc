@@ -158,17 +158,17 @@ def generate_wf():
     wf.add_jobs(compile_job)
 
     # training job
-    training_job = Job('train', node_label="compile_model")
+    training_job = Job('train', node_label="train_model")
     training_job.add_args('--mode train --model_dir training_example_$SLURM_JOB_ID  --cs_ip $CS_IP_ADDR')
     training_job.add_inputs(modelzoo_compiled)
-    training_job.add_outputs(modelzoo_trained, stage_out=False)
+    training_job.add_outputs(modelzoo_trained, stage_out=True)
     wf.add_jobs(training_job)
 
     try:
         wf.add_transformation_catalog(tc)
         wf.add_site_catalog(sc)
         wf.add_replica_catalog(rc)
-        wf.plan(conf="pegasus.properties", sites=["neocortex"], output_site="local", dir="submit", cleanup="leaf", verbose=5, submit=True)
+        wf.plan(conf="pegasus.properties", sites=["neocortex"], output_site="local", dir="submit", cleanup="leaf", force=True, verbose=5, submit=True)
     except PegasusClientError as e:
         print(e.output)
 
