@@ -160,8 +160,8 @@ def generate_wf():
     # training job
     training_job = Job('train', node_label="compile_model")
     training_job.add_args('--mode train --model_dir training_example_${SLURM_JOB_ID} --cs_ip ${CS_IP_ADDR}')
-    training_job.add_inputs(modelzoo_validated)
-    training_job.add_outputs(modelzoo_compiled, stage_out=False)
+    training_job.add_inputs(modelzoo_compiled)
+    training_job.add_outputs(modelzoo_trained, stage_out=False)
     wf.add_jobs(training_job)
 
     try:
