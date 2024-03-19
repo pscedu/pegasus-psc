@@ -162,6 +162,8 @@ def generate_wf():
     training_job.add_args('--mode train --model_dir training_example_$SLURM_JOB_ID  --cs_ip $CS_IP_ADDR')
     training_job.add_inputs(modelzoo_compiled)
     training_job.add_outputs(modelzoo_trained, stage_out=True)
+    training_job.set_stdout("train.out")
+    training_job.set_stderr("train.err")
     wf.add_jobs(training_job)
 
     try:
