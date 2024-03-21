@@ -145,16 +145,26 @@ def generate_wf():
 
     rc.add_replica('local', modelzoo_raw.lfn, "{}/input/modelzoo-raw.tgz".format(BASE_DIR))
 
+    """
+    ls -lht modelzoo/modelzoo/fc_mnist/tf/tfds/mnist/3.0.1/
+total 23M
+-rw-r--r-- 1 vahi cis240026p  856 Mar 20 14:31 dataset_info.json
+-rw-r--r-- 1 vahi cis240026p  667 Mar 20 14:31 features.json
+-rw-r--r-- 1 vahi cis240026p 3.2M Mar 20 14:31 mnist-test.tfrecord-00000-of-00001
+-rw-r--r-- 1 vahi cis240026p  19M Mar 20 14:31 mnist-train.tfrecord-00000-of-00001
+
+    """
     # validate job
     validate_job = Job('validate', node_label="validate_model")
-    validate_job.add_args('--mode train --validate_only --model_dir validate')
+    validate_job.add_args('--mode train --validate_only --model_dir model')
     validate_job.add_inputs(modelzoo_raw)
     validate_job.add_outputs(modelzoo_validated, stage_out=False)
+    # track some individual outputs
     wf.add_jobs(validate_job)
 
     # compile job
     compile_job = Job('compile', node_label="compile_model")
-    compile_job.add_args('--mode train --compile_only --model_dir compile')
+    compile_job.add_args('--mode train --compile_only --model_dir model')
     compile_job.add_inputs(modelzoo_validated)
     compile_job.add_outputs(modelzoo_compiled, stage_out=False)
     wf.add_jobs(compile_job)
@@ -162,7 +172,7 @@ def generate_wf():
     # training job
     now = datetime.datetime.now().strftime('%s')
     training_job = Job('train', node_label="train_model")
-    training_job.add_args('--mode train --model_dir training_example_$SLURM_JOB_ID  --cs_ip $CS_IP_ADDR')
+    training_job.add_args('--mode train --model_dir model --cs_ip $CS_IP_ADDR')
     training_job.add_inputs(modelzoo_compiled)
     training_job.add_outputs(modelzoo_trained, stage_out=True)
     training_job.set_stdout("train-{}.out".format(now))
