@@ -145,12 +145,14 @@ def generate_wf():
 
     rc.add_replica('local', modelzoo_raw.lfn, "{}/input/modelzoo-raw.tgz".format(BASE_DIR))
 
+    # some logs that we always stageout
+    cerebras_logs=["performance.json", "run_summary.json", "params.yaml"]
+
     # validate job
     validate_job = Job('validate', node_label="validate_model")
     validate_job.add_args('--mode train --validate_only --model_dir model')
     validate_job.add_inputs(modelzoo_raw)
     validate_job.add_outputs(modelzoo_validated, stage_out=False)
-
     # add files against which we will train as inputs
     # instead of letting the code download automatically
     prefix = "modelzoo/modelzoo/fc_mnist/tf/tfds/mnist/3.0.1/"
@@ -158,8 +160,10 @@ def generate_wf():
         train_file = File("{}/{}".format(prefix,file))
         rc.add_replica('local', train_file.lfn, "{}/input/{}".format(BASE_DIR, file))
         validate_job.add_inputs(train_file)
-
-    # track some individual outputs
+    # track some cerebras log files as outputs
+    for file in cerebras_logs:
+        # scripts do rename of the files after job completes
+        validate_job.add_outputs(File("{}_{}".format("validate", file)), stage_out=True)
     wf.add_jobs(validate_job)
 
     # compile job
@@ -167,6 +171,10 @@ def generate_wf():
     compile_job.add_args('--mode train --compile_only --model_dir model')
     compile_job.add_inputs(modelzoo_validated)
     compile_job.add_outputs(modelzoo_compiled, stage_out=False)
+    # track some cerebras log files as outputs
+    for file in cerebras_logs:
+        # scripts do rename of the files after job completes
+        compile_job.add_outputs(File("{}_{}".format("compile", file)), stage_out=True)
     wf.add_jobs(compile_job)
 
     # training job
@@ -177,6 +185,10 @@ def generate_wf():
     training_job.add_outputs(modelzoo_trained, stage_out=True)
     training_job.set_stdout("train-{}.out".format(now))
     training_job.set_stderr("train-{}.err".format(now))
+    # track some cerebras log files as outputs
+    for file in cerebras_logs:
+        # scripts do rename of the files after job completes
+        training_job.add_outputs(File("{}_{}".format("train", file)), stage_out=True)
     wf.add_jobs(training_job)
 
     try:

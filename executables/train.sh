@@ -3,11 +3,9 @@ set -e
 
 TOP_DIR=`pwd`
 
-#echo "Copying modelzoo into ${TOP_DIR}"
-#rm -rf ${TOP_DIR}/modelzoo
-#git clone https://github.com/Cerebras/modelzoo.git 
-#cd ${TOP_DIR}/modelzoo
-#git checkout tags/R_1.6.0
+STAGE="train"
+MODEL_DIR=`echo "$*" | perl -pe 's/^.*--model_dir\s*(\w*)\s*.*\s*/$1/'`
+echo "Model Dir passed for the job is $MODEL_DIR"
 
 tar zxf ./modelzoo-compiled.tgz
 
@@ -22,10 +20,16 @@ BIND_LOCATIONS=/local1/cerebras/data,/local2/cerebras/data,/local3/cerebras/data
 CEREBRAS_CONTAINER=/ocean/neocortex/cerebras/cbcore_latest.sif
 cd ${YOUR_ENTRY_SCRIPT_LOCATION}
 
-#singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER} python run.py --mode train --validate_only --model_dir validate
-#singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER} python run.py "$@"
+
 set -x
 srun --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER} python run.py "$@" 
+
+# copy some auxillary cerebras log files
+CEREBRAS_LOGS=("performance.json" "run_summary.json" "params.yaml")
+for log in ${CEREBRAS_LOGS[@]}; do
+  mv ${MODEL_DIR}/$log ${TOP_DIR}/${STAGE}_${log}
+done
+
 
 # tar up the trained model
 cd ${TOP_DIR}
