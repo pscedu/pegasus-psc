@@ -145,20 +145,20 @@ def generate_wf():
 
     rc.add_replica('local', modelzoo_raw.lfn, "{}/input/modelzoo-raw.tgz".format(BASE_DIR))
 
-    """
-    ls -lht modelzoo/modelzoo/fc_mnist/tf/tfds/mnist/3.0.1/
-total 23M
--rw-r--r-- 1 vahi cis240026p  856 Mar 20 14:31 dataset_info.json
--rw-r--r-- 1 vahi cis240026p  667 Mar 20 14:31 features.json
--rw-r--r-- 1 vahi cis240026p 3.2M Mar 20 14:31 mnist-test.tfrecord-00000-of-00001
--rw-r--r-- 1 vahi cis240026p  19M Mar 20 14:31 mnist-train.tfrecord-00000-of-00001
-
-    """
     # validate job
     validate_job = Job('validate', node_label="validate_model")
     validate_job.add_args('--mode train --validate_only --model_dir model')
     validate_job.add_inputs(modelzoo_raw)
     validate_job.add_outputs(modelzoo_validated, stage_out=False)
+
+    # add files against which we will train as inputs
+    # instead of letting the code download automatically
+    prefix = "tfds/mnist/3.0.1/"
+    for file in ["dataset_info.json", "features.json", "mnist-test.tfrecord-00000-of-00001", "mnist-train.tfrecord-00000-of-00001"]:
+        train_file = File("tfds/mnist/3.0.1/{}{}".format(prefix,file))
+        rc.add_replica('local', modelzoo_raw.lfn, "{}/input/{}".format(BASE_DIR, train_file.lfn))
+        validate_job.add_inputs(train_file)
+
     # track some individual outputs
     wf.add_jobs(validate_job)
 
@@ -183,7 +183,7 @@ total 23M
         wf.add_transformation_catalog(tc)
         wf.add_site_catalog(sc)
         wf.add_replica_catalog(rc)
-        wf.plan(conf="pegasus.properties", sites=["neocortex"], output_site="local", dir="submit", cleanup="leaf", force=True, verbose=5, submit=True)
+        wf.plan(conf="pegasus.properties", sites=["neocortex"], output_site="local", dir="submit", cleanup="none", force=True, verbose=5, submit=True)
     except PegasusClientError as e:
         print(e.output)
 
