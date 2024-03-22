@@ -156,7 +156,7 @@ def generate_wf():
     prefix = "tfds/mnist/3.0.1/"
     for file in ["dataset_info.json", "features.json", "mnist-test.tfrecord-00000-of-00001", "mnist-train.tfrecord-00000-of-00001"]:
         train_file = File("{}/{}".format(prefix,file))
-        rc.add_replica('local', train_file.lfn, "{}/input/{}".format(BASE_DIR, train_file.lfn))
+        rc.add_replica('local', train_file.lfn, "{}/input/{}".format(BASE_DIR, file))
         validate_job.add_inputs(train_file)
 
     # track some individual outputs
