@@ -30,6 +30,9 @@ for log in ${CEREBRAS_LOGS[@]}; do
   mv ${MODEL_DIR}/$log ${TOP_DIR}/${STAGE}_${log}
 done
 
+# tar up the checkpoint files
+echo "Tarring up generated checkpoints"
+(cd ${MODEL_DIR} && tar zcvf ${TOP_DIR}/model-checkpoints.tgz  model.ckpt*)
 
 # tar up the trained model
 cd ${TOP_DIR}
