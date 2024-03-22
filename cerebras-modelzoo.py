@@ -142,6 +142,7 @@ def generate_wf():
     modelzoo_validated = File("modelzoo-validated.tgz")
     modelzoo_compiled = File("modelzoo-compiled.tgz")
     modelzoo_trained = File("modelzoo-trained.tgz")
+    modelzoo_trained_checkpoints = File("model-checkpoints.tgz")
 
     rc.add_replica('local', modelzoo_raw.lfn, "{}/input/modelzoo-raw.tgz".format(BASE_DIR))
 
@@ -183,6 +184,7 @@ def generate_wf():
     training_job.add_args('--mode train --model_dir model --cs_ip $CS_IP_ADDR')
     training_job.add_inputs(modelzoo_compiled)
     training_job.add_outputs(modelzoo_trained, stage_out=True)
+    training_job.add_outputs(modelzoo_trained_checkpoints, stage_out=True)
     training_job.set_stdout("train-{}.out".format(now))
     training_job.set_stderr("train-{}.err".format(now))
     # track some cerebras log files as outputs
