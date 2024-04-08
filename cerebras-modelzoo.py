@@ -70,7 +70,8 @@ def generate_wf():
                    'cerebras',
                    Container.SINGULARITY,
                    'file:///ocean/neocortex/cerebras/cbcore_latest.sif',
-                    image_site="neocortex"
+                   image_site="neocortex",
+                   mounts=['${PROJECT}/workflows/neocortex/scratch:${PROJECT}/workflows/neocortex/scratch:rw'],
                 )
     tc.add_containers(container)
 
