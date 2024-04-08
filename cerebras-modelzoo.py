@@ -139,7 +139,6 @@ def generate_wf():
     neocortex.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
     neocortex.add_pegasus_profile(style="glite",
                                   queue="sdf",
-                                  data_configuration="sharedfs",
                                   auxillary_local=True,
                                   runtime=1800,
                                   project="cis240026p")
