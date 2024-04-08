@@ -47,8 +47,15 @@ def generate_wf():
     # data to the Pegasus developers
     props = Properties()
     props['pegasus.catalog.workflow.amqp.url'] = 'amqp://friend:donatedata@msgs.pegasus.isi.edu:5672/prod/workflows'
-    props['pegasus.data.configuration'] = 'sharedfs'
+    props['pegasus.data.configuration'] = 'nonsharedfs'
     props['pegasus.mode'] = 'development'
+    # data transfers for the jobs should happen
+    # on the HOSTOS not inside the container
+    props['pegasus.transfer.container.onhost'] = True
+    # we dont want any pegasus worker package
+    # to be installed inside the container
+    props['pegasus.transfer.worker.package'] = True
+    props['pegasus.transfer.worker.package.autodownload'] = False
     props.write() 
     
     # --- Event Hooks ---------------------------------------------------------
@@ -57,8 +64,8 @@ def generate_wf():
     wf.add_shell_hook(EventType.ALL, '{}/share/pegasus/notification/email'.format(PEGASUS_HOME))
     
     # --- Transformations -----------------------------------------------------
-    '''
-    # not listing the container at pegasus level for the time being
+
+    #
     container = Container(
                    'cerebras',
                    Container.SINGULARITY,
@@ -66,14 +73,15 @@ def generate_wf():
                     image_site="neocortex"
                 )
     tc.add_containers(container)
-    '''
+
 
 
     validate = Transformation(
         'validate',
         site='local',
         pfn=BASE_DIR + '/executables/validate.sh',
-        is_stageable=True
+        is_stageable=True,
+        container=container
     )
     validate.add_profiles(Namespace.PEGASUS, key='cores', value='1')
     validate.add_profiles(Namespace.PEGASUS, key='runtime', value='900')
@@ -84,7 +92,8 @@ def generate_wf():
         'compile',
         site='local',
         pfn=BASE_DIR + '/executables/compile.sh',
-        is_stageable=True
+        is_stageable=True,
+        container=container
     )
     compile.add_profiles(Namespace.PEGASUS, key='cores', value='1')
     compile.add_profiles(Namespace.PEGASUS, key='runtime', value='900')
