@@ -71,7 +71,7 @@ def generate_wf():
                    Container.SINGULARITY,
                    'file:///ocean/neocortex/cerebras/cbcore_latest.sif',
                    image_site="neocortex",
-                   mounts=['${PROJECT}/workflows/neocortex/scratch:${PROJECT}/workflows/neocortex/scratch:rw'],
+                   mounts=['/${PROJECT}/workflows/neocortex/scratch:/${PROJECT}/workflows/neocortex/scratch:rw'],
                 )
     tc.add_containers(container)
 
@@ -128,8 +128,8 @@ def generate_wf():
 
     sc.add_sites(local)
 
-    shared_scratch_dir = "{}/workflows/NEOCORTEX/scratch".format("${PROJECT}")
-    local_storage_dir = "{}/workflows/NEOCORTEX/storage".format("${PROJECT}")
+    shared_scratch_dir = "/{}/workflows/NEOCORTEX/scratch".format("${PROJECT}")
+    local_storage_dir = "/{}/workflows/NEOCORTEX/storage".format("${PROJECT}")
     neocortex = Site("neocortex") \
         .add_directories(
         Directory(Directory.SHARED_SCRATCH, shared_scratch_dir)
