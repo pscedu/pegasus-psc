@@ -128,8 +128,8 @@ def generate_wf():
 
     sc.add_sites(local)
 
-    shared_scratch_dir = "/{}/workflows/NEOCORTEX/scratch".format("${PROJECT}")
-    local_storage_dir = "/{}/workflows/NEOCORTEX/storage".format("${PROJECT}")
+    shared_scratch_dir = "{}/workflows/NEOCORTEX/scratch".format("${PROJECT}")
+    local_storage_dir = "{}/workflows/NEOCORTEX/storage".format("${PROJECT}")
     neocortex = Site("neocortex") \
         .add_directories(
         Directory(Directory.SHARED_SCRATCH, shared_scratch_dir)
