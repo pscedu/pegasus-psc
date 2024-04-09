@@ -137,7 +137,7 @@ def generate_wf():
         Directory(Directory.LOCAL_STORAGE, local_storage_dir)
         .add_file_servers(FileServer("file://" + local_storage_dir, Operation.ALL)))
     neocortex.add_condor_profile(grid_resource="batch slurm")
-    neocortex.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
+#    neocortex.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
     neocortex.add_pegasus_profile(style="glite",
                                   queue="sdf",
                                   auxillary_local=True,
