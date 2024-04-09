@@ -132,7 +132,7 @@ def generate_wf():
     local_storage_dir = "/{}/workflows/NEOCORTEX/storage".format("${PROJECT}")
     neocortex = Site("neocortex") \
         .add_directories(
-        Directory(Directory.SHARED_SCRATCH, shared_scratch_dir)
+        Directory(Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True)
         .add_file_servers(FileServer("file://" + shared_scratch_dir, Operation.ALL)),
         Directory(Directory.LOCAL_STORAGE, local_storage_dir)
         .add_file_servers(FileServer("file://" + local_storage_dir, Operation.ALL)))
