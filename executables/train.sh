@@ -4,7 +4,7 @@ set -e
 TOP_DIR=`pwd`
 
 STAGE="train"
-MODEL_DIR=`echo "$*" | perl -pe 's/^.*--model_dir\s*(\w*)\s*.*\s*/$1/'`
+MODEL_DIR=`echo "$*" | sed -E 's/^.*--model_dir\s*(\w*)\s*.*\s*/\1/'`
 echo "Model Dir passed for the job is $MODEL_DIR"
 
 tar zxf ./modelzoo-compiled.tgz
