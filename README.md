@@ -1,10 +1,10 @@
 # Cerebras ModelZoo Training Workflow
 
 This Pegasus workflow validates, compiles and trains the model
-using Tensor Flow as part of a single worklfow setup to run on Neocortex.
+using Tensor Flow as part of a single workflow setup to run on Neocortex.
 
-
-[Running Jobs on Neocortex]([https://datacarpentry.org/wrangling-genomics/05-automation/index.html](https://portal.neocortex.psc.edu/docs/running-jobs.html)) 
+The workflow is based on the example at 
+[Running Jobs on Neocortex](https://portal.neocortex.psc.edu/docs/running-jobs.html) .
 
 
 ## Dependencies
