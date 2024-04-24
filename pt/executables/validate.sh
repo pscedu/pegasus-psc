@@ -13,8 +13,9 @@ tar zxf ./modelzoo-raw.tgz
 # untar other inputs staged
 PREFIX="modelzoo/modelzoo/fc_mnist/pytorch/data/mnist/train/MNIST/raw"
 INPUT_DATASETS=("train-images-idx3-ubyte.gz" "train-labels-idx1-ubyte.gz" "t10k-images-idx3-ubyte.gz" "t10k-labels-idx1-ubyte.gz")
-for input in ${INPUT_DATASETS[@]}; do                                                                                                                                                                                                                                  echo "Uncompressing $input"
-  gunzip  ${PREFIX}/$input 
+for input in ${INPUT_DATASETS[@]}; do
+    echo "Uncompressing $input"
+    gunzip  ${PREFIX}/$input 
 done
 
 cd ${TOP_DIR}/modelzoo           
