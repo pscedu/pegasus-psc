@@ -11,10 +11,10 @@ echo "Model Dir passed for the job is $MODEL_DIR"
 tar zxf ./modelzoo-raw.tgz
 
 # untar other inputs staged
-INPUT_DIR="modelzoo/modelzoo/fc_mnist/pytorch/data/mnist/train/MNIST/raw"
+PREFIX="modelzoo/modelzoo/fc_mnist/pytorch/data/mnist/train/MNIST/raw"
 INPUT_DATASETS=("train-images-idx3-ubyte.gz" "train-labels-idx1-ubyte.gz" "t10k-images-idx3-ubyte.gz" "t10k-labels-idx1-ubyte.gz")
-for input in ${INPUT_DATASETS[@]}; do                                                                                                                                                                                                                                  echo "Untarring $input"
-  gunzip  ${INPUT_DIR}/$input 
+for input in ${INPUT_DATASETS[@]}; do                                                                                                                                                                                                                                  echo "Uncompressing $input"
+  gunzip  ${PREFIX}/$input 
 done
 
 cd ${TOP_DIR}/modelzoo           
