@@ -1,4 +1,4 @@
-# Cerebras ModelZoo Training Workflow
+# Cerebras ModelZoo Training Workflows
 
 This repository contains example Pegasus workflows that execute on the Cerebras machine at PSC called Neocortex. The examples are for some of the models in the [modelzoo](https://portal.neocortex.psc.edu/docs/modelzoo.html) that Cerebras has made availble for users to run. 
 
