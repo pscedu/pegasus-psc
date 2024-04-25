@@ -186,9 +186,9 @@ def generate_wf():
     compile_job.add_inputs(modelzoo_validated)
     compile_job.add_outputs(modelzoo_compiled, stage_out=False)
     # track some cerebras log files as outputs
-    #for file in cerebras_logs:
-    #    # scripts do rename of the files after job completes
-    #    compile_job.add_outputs(File("{}_{}".format("compile", file)), stage_out=True)
+    for file in cerebras_logs:
+       # scripts do rename of the files after job completes
+        compile_job.add_outputs(File("{}_{}".format("compile", file)), stage_out=True)
     wf.add_jobs(compile_job)
 
     # training job
