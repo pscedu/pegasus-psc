@@ -31,7 +31,7 @@ YOUR_ENTRY_SCRIPT_LOCATION=${YOUR_MODEL_ROOT_DIR}/fc_mnist/pytorch
 #CEREBRAS_CONTAINER=${LOCAL}/cerebras/cbcore_latest.sif
 CEREBRAS_CONTAINER=/ocean/neocortex/cerebras/cbcore_latest.sif
 cd ${YOUR_ENTRY_SCRIPT_LOCATION}
-set -x
+
 #srun --ntasks=1 --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER} python-pt run.py --mode train --validate_only --params configs/params.yaml --model_dir training_example_${SLURM_JOB_ID} 
 python-pt run.py "$@"
 
@@ -45,4 +45,4 @@ python-pt run.py "$@"
 cd ${TOP_DIR}
 
 echo "Tarring up validated model in ${TOP_DIR}"
-tar zcvf modelzoo-validated.tgz  ./modelzoo
+tar zcf modelzoo-validated.tgz  ./modelzoo
