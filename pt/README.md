@@ -4,7 +4,7 @@ This Pegasus workflow validates, compiles and trains the model
 using PyTorch as part of a single worklfow setup to run on Neocortex.
 
 
-[Running Jobs on Neocortex]([https://datacarpentry.org/wrangling-genomics/05-automation/index.html](https://portal.neocortex.psc.edu/docs/running-jobs.html)) 
+[Running Jobs on Neocortex](https://portal.neocortex.psc.edu/docs/running-jobs.html) 
 
 
 ## Container
