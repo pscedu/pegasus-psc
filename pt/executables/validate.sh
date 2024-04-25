@@ -36,10 +36,12 @@ cd ${YOUR_ENTRY_SCRIPT_LOCATION}
 python-pt run.py "$@"
 
 # copy some auxillary cerebras log files
-#CEREBRAS_LOGS=("performance.json" "run_summary.json" "params.yaml")
-#for log in ${CEREBRAS_LOGS[@]}; do
-#  mv ${MODEL_DIR}/$log ${TOP_DIR}/${STAGE}_${log}
-#done
+CEREBRAS_LOGS=("fabric.json" "run_summary.json")
+for log in ${CEREBRAS_LOGS[@]}; do
+  mv ${MODEL_DIR}/$log ${TOP_DIR}/${STAGE}_${log}
+done
+mv ${MODEL_DIR}/train/params_train.yaml ${TOP_DIR}/${STAGE}_params.yaml
+
 
 # tar up the validated model
 cd ${TOP_DIR}
