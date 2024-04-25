@@ -26,14 +26,17 @@ set -x
 srun --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER}  python-pt  run.py "$@" 
 
 # copy some auxillary cerebras log files
-#CEREBRAS_LOGS=("performance.json" "run_summary.json" "params.yaml")
-#for log in ${CEREBRAS_LOGS[@]}; do
-#  mv ${MODEL_DIR}/$log ${TOP_DIR}/${STAGE}_${log}
-#done
+CEREBRAS_LOGS=("fabric.json" "run_summary.json")
+for log in ${CEREBRAS_LOGS[@]}; do
+  mv ${MODEL_DIR}/$log ${TOP_DIR}/${STAGE}_${log}
+done
+mv ${MODEL_DIR}/train/params_train.yaml ${TOP_DIR}/${STAGE}_params.yaml
+mv ${MODEL_DIR}/performance/performance.json ${TOP_DIR}/${STAGE}_performance.json
+
 
 # tar up the checkpoint files
-#echo "Tarring up generated checkpoints"
-#(cd ${MODEL_DIR} && tar zcvf ${TOP_DIR}/model-checkpoints.tgz  model.ckpt*)
+echo "Tarring up generated checkpoints"
+(cd ${MODEL_DIR} && tar zcvf ${TOP_DIR}/model-checkpoints.tgz  checkpoint_*mdl)
 
 # tar up the trained model
 cd ${TOP_DIR}

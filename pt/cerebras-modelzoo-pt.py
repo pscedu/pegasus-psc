@@ -184,7 +184,7 @@ def generate_wf():
     compile_job = Job('compile', node_label="compile_model")
     compile_job.add_args('--mode train --compile_only --params configs/params.yaml --model_dir model')
     compile_job.add_inputs(modelzoo_validated)
-    compile_job.add_outputs(modelzoo_compiled, stage_out=False)
+    compile_job.add_outputs(modelzoo_compiled, stage_out=True)
     # track some cerebras log files as outputs
     for file in cerebras_logs:
        # scripts do rename of the files after job completes
@@ -201,9 +201,10 @@ def generate_wf():
     training_job.set_stdout("train-{}.out".format(now))
     training_job.set_stderr("train-{}.err".format(now))
     # track some cerebras log files as outputs
-    #for file in cerebras_logs:
-    #    # scripts do rename of the files after job completes
-    #    training_job.add_outputs(File("{}_{}".format("train", file)), stage_out=True)
+    for file in cerebras_logs:
+        # scripts do rename of the files after job completes
+        training_job.add_outputs(File("{}_{}".format("train", file)), stage_out=True)
+    training_job.add_outputs(File("train_performance.json"), stage_out=True)
     wf.add_jobs(training_job)
 
     try:
