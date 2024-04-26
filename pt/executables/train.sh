@@ -26,7 +26,7 @@ set -x
 srun --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER}  python-pt  run.py "$@" 
 
 # copy some auxillary cerebras log files
-CEREBRAS_LOGS=("fabric.json" "run_summary.json")
+CEREBRAS_LOGS=("run_summary.json")
 for log in ${CEREBRAS_LOGS[@]}; do
   mv ${MODEL_DIR}/$log ${TOP_DIR}/${STAGE}_${log}
 done

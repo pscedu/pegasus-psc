@@ -188,7 +188,7 @@ def generate_wf():
     compile_job.add_outputs(modelzoo_compiled, stage_out=True)
     # track some cerebras log files as outputs
     for file in cerebras_logs:
-       # scripts do rename of the files after job completes
+        # scripts do rename of the files after job completes
         compile_job.add_outputs(File("{}_{}".format("compile", file)), stage_out=True)
     wf.add_jobs(compile_job)
 
@@ -204,7 +204,11 @@ def generate_wf():
     # track some cerebras log files as outputs
     for file in cerebras_logs:
         # scripts do rename of the files after job completes
+        if file == "fabric.json":
+            # we dont copy fabric.json 
+            continue;
         training_job.add_outputs(File("{}_{}".format("train", file)), stage_out=True)
+
     training_job.add_outputs(File("train_performance.json"), stage_out=True)
     wf.add_jobs(training_job)
 
