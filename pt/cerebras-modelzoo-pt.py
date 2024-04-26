@@ -165,6 +165,7 @@ def generate_wf():
     validate_job = Job('validate', node_label="validate_model")
     validate_job.add_args('--mode train --validate_only --params configs/params.yaml  --model_dir model')
     validate_job.add_inputs(modelzoo_raw)
+    validate_job.add_inputs(modelzoo_config_params)
     validate_job.add_outputs(modelzoo_validated, stage_out=True)
     # add files against which we will train as inputs
     # instead of letting the code download automatically
