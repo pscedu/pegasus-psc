@@ -59,6 +59,8 @@ def generate_wf():
     # to be installed inside the container
     props["pegasus.transfer.worker.package"] = True
     props["pegasus.transfer.worker.package.autodownload"] = False
+    # enable symlinking
+    #props["pegasus.transfer.links"] = True
     props.write()
 
     # --- Event Hooks ---------------------------------------------------------
@@ -142,7 +144,7 @@ def generate_wf():
     sc.add_sites(local)
 
     shared_scratch_dir = "/{}/workflows/NEOCORTEX/scratch".format("${PROJECT}")
-    local_scratch_dir = "/local4/{}/workflows/NEOCORTEX/scratch".format("${SALLOC_ACCOUNT}")
+    local_scratch_dir = "/local4/{}".format("${SALLOC_ACCOUNT}")
     neocortex = Site("neocortex").add_directories(
         Directory(
             Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True
