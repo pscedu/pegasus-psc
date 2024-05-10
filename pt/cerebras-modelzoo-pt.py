@@ -142,13 +142,13 @@ def generate_wf():
     sc.add_sites(local)
 
     shared_scratch_dir = "/{}/workflows/NEOCORTEX/scratch".format("${PROJECT}")
-    local_storage_dir = "/{}/workflows/NEOCORTEX/storage".format("${PROJECT}")
+    local_scratch_dir = "/local4/{}/workflows/NEOCORTEX/scratch".format("${SALLOC_ACCOUNT}")
     neocortex = Site("neocortex").add_directories(
         Directory(
             Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True
         ).add_file_servers(FileServer("file://" + shared_scratch_dir, Operation.ALL)),
-        Directory(Directory.LOCAL_STORAGE, local_storage_dir).add_file_servers(
-            FileServer("file://" + local_storage_dir, Operation.ALL)
+        Directory(Directory.LOCAL_SCRATCH, local_scratch_dir).add_file_servers(
+            FileServer("file://" + local_scratch_dir, Operation.ALL)
         ),
     )
     neocortex.add_condor_profile(grid_resource="batch slurm")
