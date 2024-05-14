@@ -123,6 +123,7 @@ def generate_wf():
         Namespace.PEGASUS,
         key="glite.arguments",
         value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low",
+        container=container
     )
     tc.add_transformations(train)
 

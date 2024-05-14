@@ -9,10 +9,11 @@ echo "Model Dir passed for the job is $MODEL_DIR"
 
 tar zxf ./modelzoo-compiled.tgz
 
+set -x 
+
 cd ${TOP_DIR}/modelzoo           
-#YOUR_DATA_DIR=${LOCAL}/cerebras/data
-mkdir -p ${TOP_DIR}/cerebras/data
 YOUR_DATA_DIR=${TOP_DIR}/cerebras/data    
+mkdir -p ${YOUR_DATA_DIR}
 YOUR_MODEL_ROOT_DIR=${TOP_DIR}/modelzoo/modelzoo
 YOUR_ENTRY_SCRIPT_LOCATION=${YOUR_MODEL_ROOT_DIR}/fc_mnist/pytorch
 
@@ -21,9 +22,9 @@ BIND_LOCATIONS=/local1/cerebras/data,/local2/cerebras/data,/local3/cerebras/data
 CEREBRAS_CONTAINER=/ocean/neocortex/cerebras/cbcore_latest.sif
 cd ${YOUR_ENTRY_SCRIPT_LOCATION}
 
-
-set -x
-srun --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER}  python-pt  run.py "$@" 
+#srun --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER}  python-pt  run.py "$@" 
+echo "PATH is set to ${PATH}"
+python-pt run.py "$@"
 
 # copy some auxillary cerebras log files
 CEREBRAS_LOGS=("run_summary.json")

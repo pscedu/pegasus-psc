@@ -19,6 +19,7 @@ YOUR_ENTRY_SCRIPT_LOCATION=${YOUR_MODEL_ROOT_DIR}/fc_mnist/pytorch
 CEREBRAS_CONTAINER=/ocean/neocortex/cerebras/cbcore_latest.sif
 cd ${YOUR_ENTRY_SCRIPT_LOCATION}
 
+echo "PATH is set to ${PATH}"
 # execute the task
 #singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER} python-pt run.py --mode train --compile_only --params configs/params.yaml --model_dir training_example_${SLURM_JOB_ID}
 python-pt run.py "$@"
