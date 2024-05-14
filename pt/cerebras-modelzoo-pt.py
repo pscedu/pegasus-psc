@@ -115,15 +115,16 @@ def generate_wf():
     tc.add_transformations(compile)
 
     train = Transformation(
-        "train", site="local", pfn=BASE_DIR + "/executables/train.sh", is_stageable=True
+        "train", site="local", pfn=BASE_DIR + "/executables/train.sh", is_stageable=True, container=container
     )
     train.add_profiles(Namespace.PEGASUS, key="cores", value="1")
     train.add_profiles(Namespace.PEGASUS, key="runtime", value="3600")
+    train.add_profiles(Namespace.PEGASUS, key="container.launcher", value="srun")
+    train.add_profiles(Namespace.PEGASUS, key="container.launcher.arguments", value="--kill-on-bad-exit")
     train.add_profiles(
         Namespace.PEGASUS,
         key="glite.arguments",
-        value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low",
-        container=container
+        value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low"
     )
     tc.add_transformations(train)
 
