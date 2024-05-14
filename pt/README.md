@@ -41,3 +41,11 @@ The Pegasus workflow starts with a tar file containing the Git checkout of
 the modelzoo repo, and iterates on it
 
 ![Pegasus Cerebras ModelZoo PyTorch Training Example Workflow ](./images/workflow.png)
+
+### Running the workflow
+
+You can run the workflow from neocortex login node as follow
+
+```
+$./cerebras-modelzoo-pt.py --project $SALLOC_ACCOUNT
+```
