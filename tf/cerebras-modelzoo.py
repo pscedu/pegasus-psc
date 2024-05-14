@@ -33,11 +33,12 @@ def generate_wf():
     workflow
     '''
 
-    parser = argparse.ArgumentParser(description="generate a sample pegasus workflow")
-
+    parser = argparse.ArgumentParser(description="generate a sample cerebras tensor flow pegasus workflow")
+    parser.add_argument('--project', dest='project', default=None, required=True,
+                        help='Specifies the project/grantid of your project')
     args = parser.parse_args(sys.argv[1:])
     
-    wf = Workflow('cerebras-model-zoo')
+    wf = Workflow('cerebras-model-zoo-tf')
     tc = TransformationCatalog()
     rc = ReplicaCatalog()
     
@@ -142,7 +143,7 @@ def generate_wf():
                                   queue="sdf",
                                   auxillary_local=True,
                                   runtime=1800,
-                                  project="cis240026p")
+                                  project=args.project)
     sc.add_sites(neocortex)
 
     # --- Workflow -----------------------------------------------------
