@@ -11,29 +11,27 @@ using Tensor Flow as part of a single worklfow setup to run on Neocortex.
 All the jobs are run via a Cerebras provided singularity container that is 
 available on the shared filesystem.
 
+
 ## Setting up the input data for the workflow 
 
-```
-$  ./executables/prepare_inputs.sh 
-...
-modelzoo/user_scripts/csrun_wse
-         11,308 100%   43.14kB/s    0:00:00 (xfr#615, to-chk=0/772)
-Removing params.yaml from pytorch config dir
-Tarring up the git checkout to /jet/home/vahi/work/cerebras-modelzoo/pt/input/modelzoo-raw.tgz
-```
 
-The workflow also requires additional inputs to be placed in the input directory namely
-the *params.yaml* file for the training. The training datasets are tracked as part of the workflow
-and downloaded at runtime from the http://yann.lecun.com/exdb/mnist/ 
+ ```
+ $  ./executables/prepare_inputs.sh 
+ Cloning the modelzoo repository into ./input
+ Cloning into 'modelzoo'...
+ ...
+ HEAD is now at 886a438... R_1.6.0
+  Tarring up the git checkout to /jet/home/vahi/work/cerebras-modelzoo/input/modelzoo-raw.tgz
+ ```
+ The workflow also requires additional inputs to be placed in the input directory.
+ These are the inputs on which you do the training 
 
-These are the inputs on which you do the training 
+ * modelzoo/modelzoo/fc_mnist/tf/tfds/mnist/3.0.1/dataset_info.json
+ * modelzoo/modelzoo/fc_mnist/tf/tfds/mnist/3.0.1/features.json
+ * modelzoo/modelzoo/fc_mnist/tf/tfds/mnist/3.0.1/mnist-test.tfrecord-00000-of-00001
+ * modelzoo/modelzoo/fc_mnist/tf/tfds/mnist/3.0.1/mnist-train.tfrecord-00000-of-00001
 
-* modelzoo/modelzoo/fc_mnist/pytorch/data/mnist/train/MNIST/raw/train-images-idx3-ubyte.gz
-* modelzoo/modelzoo/fc_mnist/pytorch/data/mnist/train/MNIST/raw/train-labels-idx1-ubyte.gz
-* modelzoo/modelzoo/fc_mnist/pytorch/data/mnist/train/MNIST/raw/t10k-images-idx3-ubyte.gz
-* modelzoo/modelzoo/fc_mnist/pytorch/data/mnist/train/MNIST/raw/t10k-labels-idx1-ubyte.gz
-
-
+ These are checked into the input directory for the example workflow.
 
 ## Workflow
 
