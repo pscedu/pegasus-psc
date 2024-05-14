@@ -38,7 +38,7 @@ available on the shared filesystem.
 The Pegasus workflow starts with a tar file containing the Git checkout of 
 the modelzoo repo, and iterates on it
 
-![Pegasus Cerebras ModelZoo PyTorch Training Example Workflow ](./images/workflow.png)
+![Pegasus Cerebras ModelZoo Tensor Flow Training Example Workflow ](./images/workflow.png)
 
 ### Running the workflow
 
