@@ -345,11 +345,9 @@ if __name__ == "__main__":
 
 """
 def generate_wf():
-    """
-    Main function that parses arguments and generates the pegasus
-    workflow
-    """
-
+    # Main function that parses arguments and generates the pegasus
+    # workflow
+    
     parser = argparse.ArgumentParser(description="generate a sample cerebras PyTorch pegasus workflow")
     parser.add_argument('--project', dest='project', default=None, required=True,
                         help='Specifies the project/grantid of your project')
