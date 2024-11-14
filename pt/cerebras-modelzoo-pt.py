@@ -327,6 +327,7 @@ class CerebrasPyTorchWorkflow():
         self.create_transformation_catalog()
         self.create_replica_catalog()
         self.create_workflow()
+        self.write()
         self.plan_submit()
 
 
