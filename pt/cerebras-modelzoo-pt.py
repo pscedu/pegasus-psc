@@ -29,19 +29,18 @@ PEGASUS_HOME = os.path.dirname(os.path.dirname(PEGASUS_HOME))
 
 
 class CerebrasPyTorchWorkflow():
-    wf = None
-    sc = None
-    tc = None
-    rc = None
-    props = None
-    wf_name = "cerebras-model-zoo-pt"
-    project = None
-    # Log
-    log = logging.getLogger(__name__)
 
     # --- Init ---------------------------------------------------------------------
-    def __init__(self, dagfile="workflow.yml"):
-        self.dagfile = dagfile
+    def __init__(self, project=None):
+        self.wf = None
+        self.sc = None
+        self.tc = None
+        self.rc = None
+        self.props = None
+        self.wf_name = "cerebras-model-zoo-pt"
+        self.project = project
+        # Log
+        self.log = logging.getLogger(__name__)
 
     # --- Write files in directory -------------------------------------------------
     def write(self):
@@ -317,11 +316,6 @@ class CerebrasPyTorchWorkflow():
         self.wf.add_jobs(training_job)
 
     def __call__(self):
-        parser = argparse.ArgumentParser(description="generate a sample cerebras PyTorch pegasus workflow")
-        parser.add_argument('--project', dest='project', default=None, required=True,
-                            help='Specifies the project/grantid of your project')
-        args = parser.parse_args(sys.argv[1:])
-
         self.log.info("Creating workflow properties...")
         self.create_pegasus_properties()
 
@@ -345,7 +339,11 @@ class CerebrasPyTorchWorkflow():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    wf = CerebrasPyTorchWorkflow()
+    parser = argparse.ArgumentParser(description="generate a sample cerebras PyTorch pegasus workflow")
+    parser.add_argument('--project', dest='project', default=None, required=True,
+                        help='Specifies the project/grantid of your project')
+    args = parser.parse_args(sys.argv[1:])
+    wf = CerebrasPyTorchWorkflow(project=args.project)
     try:
         wf()
     except PegasusClientError as e:
