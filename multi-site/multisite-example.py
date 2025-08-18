@@ -247,7 +247,7 @@ class MultiSiteExampleWorkflow():
         regression_job = Job("regression", node_label="regression_node")
         regression_output = File("regression_output.txt")
         regression_job.add_args(
-            "--input " + pre_training_output.lfn + "--output " + regression_output.lfn
+            "--input " + pre_training_output.lfn + " --output " + regression_output.lfn
         )
         regression_job.add_inputs(pre_training_output)
         regression_job.add_outputs(regression_output, stage_out=True)
