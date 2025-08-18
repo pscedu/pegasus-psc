@@ -27,7 +27,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # need to know where Pegasus is installed for notifications
 PEGASUS_HOME = shutil.which("pegasus-version")
 PEGASUS_HOME = os.path.dirname(os.path.dirname(PEGASUS_HOME))
-
+WF_SSH_KEY_PATH = os.path.expanduser("~") + "/.pegasus/wfsshkey"
 USER = getpass.getuser()
 
 
@@ -128,7 +128,7 @@ class MultiSiteExampleWorkflow():
                 FileServer("file://" + local_storage_dir, Operation.ALL)
             ),
         )
-
+        local.add_pegasus_profile(SSH_PRIVATE_KEY=WF_SSH_KEY_PATH)
         self.sc.add_sites(local)
 
         # the neocortex site
