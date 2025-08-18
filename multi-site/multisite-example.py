@@ -27,6 +27,10 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # need to know where Pegasus is installed for notifications
 PEGASUS_HOME = shutil.which("pegasus-version")
 PEGASUS_HOME = os.path.dirname(os.path.dirname(PEGASUS_HOME))
+
+# generate a new ssh key (without any password) for the workflows
+# ssh-keygen -t ed25519 -f ~/.pegasus/wfsshkey -C "key for pegasus workflows"
+# add wfsshkey.pub to your authorized keys on bridges2
 WF_SSH_KEY_PATH = os.path.expanduser("~") + "/.pegasus/wfsshkey"
 USER = getpass.getuser()
 
@@ -235,7 +239,7 @@ class MultiSiteExampleWorkflow():
         # pretraining job
         pretraining_job = Job("pretrain", node_label="pretraining_node")
         pretraining_job.add_args(
-            "--input " + pre_training_input.lfn + "--output " + pre_training_output.lfn
+            "--input " + pre_training_input.lfn + " --output " + pre_training_output.lfn
         )
         pretraining_job.add_inputs(pre_training_input)
         pretraining_job.add_outputs(pre_training_output, stage_out=True)
