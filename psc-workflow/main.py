@@ -51,7 +51,7 @@ class CerebrasPyTorchWorkflow():
         self.tc = None
         self.rc = None
         self.props = None
-        self.wf_name = "cerebras-model-zoo-pt"
+        self.wf_name = "psc-workflow"
         self.project = project
         # Log
         self.log = logging.getLogger(__name__)
@@ -169,59 +169,53 @@ class CerebrasPyTorchWorkflow():
     def create_transformation_catalog(self, exec_site_name="condorpool"):
         self.tc = TransformationCatalog()
         container = Container(
-            "cerebras",
-            Container.SINGULARITY,
-            "file:///ocean/neocortex/cerebras/cbcore_latest.sif",
+            name="cerebras",
+            container_type=Container.SINGULARITY,
+            image="file:///ocean/neocortex/cerebras/cbcore_latest.sif",
             image_site="neocortex",
-            # mounts=['/${PROJECT}/workflows/NEOCORTEX/scratch:/${PROJECT}/workflows/NEOCORTEX/scratch:rw'],
         )
         self.tc.add_containers(container)
 
-        validate = Transformation(
-            "validate",
+        step1_pretrain = Transformation(
+            name="step1_pretrain",
             site="local",
-            pfn=BASE_DIR + "/executables/validate.sh",
+            pfn=BASE_DIR + "/step1/run_pretrain.sh",
             is_stageable=True,
             container=container,
         )
-        validate.add_profiles(Namespace.PEGASUS, key="cores", value="1")
-        validate.add_profiles(Namespace.PEGASUS, key="runtime", value="900")
-        validate.add_profiles(
-            Namespace.PEGASUS,
-            key="glite.arguments",
-            value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low",
-        )
-        self.tc.add_transformations(validate)
+        step1_pretrain.add_profiles(Namespace.PEGASUS, key="cores", value="1")
+        step1_pretrain.add_profiles(Namespace.PEGASUS, key="runtime", value="900")
+        step1_pretrain.add_profiles(Namespace.PEGASUS, key="glite.arguments",
+                                    value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
+        self.tc.add_transformations(step1_pretrain)
 
-        compile = Transformation(
-            "compile",
+        step2_regression = Transformation(
+            name="step2_regression",
             site="local",
-            pfn=BASE_DIR + "/executables/compile.sh",
+            pfn=BASE_DIR + "/step2/run_regression.sh",
             is_stageable=True,
             container=container,
         )
-        compile.add_profiles(Namespace.PEGASUS, key="cores", value="1")
-        compile.add_profiles(Namespace.PEGASUS, key="runtime", value="900")
-        compile.add_profiles(
-            Namespace.PEGASUS,
-            key="glite.arguments",
-            value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low",
-        )
-        self.tc.add_transformations(compile)
+        step2_regression.add_profiles(Namespace.PEGASUS, key="cores", value="1")
+        step2_regression.add_profiles(Namespace.PEGASUS, key="runtime", value="900")
+        step2_regression.add_profiles(Namespace.PEGASUS, key="glite.arguments",
+                                      value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
+        self.tc.add_transformations(step2_regression)
 
-        train = Transformation(
-            "train", site="local", pfn=BASE_DIR + "/executables/train.sh", is_stageable=True, container=container
+        step3_inference = Transformation(
+            name="train",
+            site="local",
+            pfn=BASE_DIR + "/executables/train.sh",
+            is_stageable=True,
+            container=container,
         )
-        train.add_profiles(Namespace.PEGASUS, key="cores", value="1")
-        train.add_profiles(Namespace.PEGASUS, key="runtime", value="3600")
-        train.add_profiles(Namespace.PEGASUS, key="container.launcher", value="srun")
-        train.add_profiles(Namespace.PEGASUS, key="container.launcher.arguments", value="--kill-on-bad-exit")
-        train.add_profiles(
-            Namespace.PEGASUS,
-            key="glite.arguments",
-            value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low"
-        )
-        self.tc.add_transformations(train)
+        step3_inference.add_profiles(Namespace.PEGASUS, key="cores", value="1")
+        step3_inference.add_profiles(Namespace.PEGASUS, key="runtime", value="3600")
+        step3_inference.add_profiles(Namespace.PEGASUS, key="container.launcher", value="srun")
+        step3_inference.add_profiles(Namespace.PEGASUS, key="container.launcher.arguments", value="--kill-on-bad-exit")
+        step3_inference.add_profiles(Namespace.PEGASUS, key="glite.arguments",
+                                     value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
+        self.tc.add_transformations(step3_inference)
 
     # --- Replica Catalog ----------------------------------------------------------
     def create_replica_catalog(self):
