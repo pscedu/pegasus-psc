@@ -183,10 +183,8 @@ class CerebrasPyTorchWorkflow():
             is_stageable=True,
             container=container,
         )
-        step1_pretrain.add_profiles(Namespace.PEGASUS, key="cores", value="1")
-        step1_pretrain.add_profiles(Namespace.PEGASUS, key="runtime", value="900")
-        step1_pretrain.add_profiles(Namespace.PEGASUS, key="glite.arguments",
-                                    value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
+        step1_pretrain.add_pegasus_profiles(cores=1, runtime="900",
+                                            glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
         self.tc.add_transformations(step1_pretrain)
 
         step2_regression = Transformation(
@@ -196,10 +194,8 @@ class CerebrasPyTorchWorkflow():
             is_stageable=True,
             container=container,
         )
-        step2_regression.add_profiles(Namespace.PEGASUS, key="cores", value="1")
-        step2_regression.add_profiles(Namespace.PEGASUS, key="runtime", value="900")
-        step2_regression.add_profiles(Namespace.PEGASUS, key="glite.arguments",
-                                      value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
+        step2_regression.add_pegasus_profiles(cores=1, runtime="900",
+                                              glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
         self.tc.add_transformations(step2_regression)
 
         step3_inference = Transformation(
@@ -215,6 +211,10 @@ class CerebrasPyTorchWorkflow():
         step3_inference.add_profiles(Namespace.PEGASUS, key="container.launcher.arguments", value="--kill-on-bad-exit")
         step3_inference.add_profiles(Namespace.PEGASUS, key="glite.arguments",
                                      value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
+        step3_inference.add_pegasus_profiles(cores=1, runtime="3600",
+                                             container_launcher="srun",
+                                             container_launcher_arguments="--kill-on-bad-exit",
+                                             glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
         self.tc.add_transformations(step3_inference)
 
     # --- Replica Catalog ----------------------------------------------------------
