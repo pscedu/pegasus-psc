@@ -17,8 +17,9 @@ import logging
 import os
 import shutil
 import sys
+import getpass
 
-from Pegasus.api import Container
+from Pegasus.api import Container, Grid, Scheduler, SupportedJobs
 from Pegasus.api import Directory
 from Pegasus.api import File
 from Pegasus.api import FileServer
@@ -41,8 +42,19 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 PEGASUS_HOME = shutil.which("pegasus-version")
 PEGASUS_HOME = os.path.dirname(os.path.dirname(PEGASUS_HOME))
 
+# generate a new ssh key (without any password) for the workflows
+# ssh-keygen -t ed25519 -f ~/.pegasus/wfsshkey -C "key for pegasus workflows"
+# add wfsshkey.pub to your authorized keys on bridges2
+# WF_SSH_KEY_PATH = os.path.expanduser("~") + "/.pegasus/wfsshkey"
+USER = getpass.getuser()
 
-class CerebrasPyTorchWorkflow():
+NEOCORTEX_SITE_HANDLE = "neocortex"
+BRIDGES2_SITE_HANDLE = "bridges2"
+
+# from IPython.display import Image; Image(filename='graph.png')
+
+
+class CerebrasPyTorchWorkflow:
 
     # --- Init ---------------------------------------------------------------------
     def __init__(self, project=None):
@@ -74,7 +86,7 @@ class CerebrasPyTorchWorkflow():
         try:
             self.wf.plan(
                 conf="pegasus.properties",
-                sites=["neocortex"],
+                sites=[NEOCORTEX_SITE_HANDLE, ],  # BRIDGES2_SITE_HANDLE],
                 output_site="local",
                 dir="submit",
                 cleanup="none",
@@ -128,7 +140,7 @@ class CerebrasPyTorchWorkflow():
         return
 
     # --- Site Catalog -------------------------------------------------------------
-    def create_sites_catalog(self, exec_site_name="condorpool"):
+    def create_sites_catalog(self):
         self.sc = SiteCatalog()
         # add a local site with an optional job env file to use for compute jobs
         shared_scratch_dir = "/{}/workflows/LOCAL/scratch".format("${PROJECT}")
@@ -141,12 +153,13 @@ class CerebrasPyTorchWorkflow():
                 FileServer("file://" + local_storage_dir, Operation.ALL)
             ),
         )
-
+        # TODO: local.add_pegasus_profile(SSH_PRIVATE_KEY=WF_SSH_KEY_PATH)
         self.sc.add_sites(local)
 
+        # the neocortex site
         shared_scratch_dir = "/{}/workflows/NEOCORTEX/scratch".format("${PROJECT}")
         local_scratch_dir = "/local4/{}".format("${SALLOC_ACCOUNT}")
-        neocortex = Site("neocortex").add_directories(
+        neocortex = Site(NEOCORTEX_SITE_HANDLE).add_directories(
             Directory(
                 Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True
             ).add_file_servers(FileServer("file://" + shared_scratch_dir, Operation.ALL)),
@@ -165,20 +178,44 @@ class CerebrasPyTorchWorkflow():
         )
         self.sc.add_sites(neocortex)
 
+        # bridges2 site
+        shared_scratch_dir = "/{}/workflows/BRIDGES/scratch".format("${PROJECT}")
+        login_host = "bridges2.psc.edu"
+        bridges2 = Site(BRIDGES2_SITE_HANDLE).add_directories(
+            Directory(
+                Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True
+            ).add_file_servers(FileServer("file:///" + shared_scratch_dir, Operation.ALL))
+        )
+        bridges2.add_grids(
+            Grid(grid_type=Grid.BATCH, scheduler_type=Scheduler.SLURM, contact=login_host,
+                 job_type=SupportedJobs.COMPUTE)
+        )
+        # TODO
+        bridges2.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
+        bridges2.add_pegasus_profile(
+            style="ssh",
+            queue="RM-shared",
+            auxillary_local=True,
+            runtime=1800,
+            project=self.project,
+        )
+        self.sc.add_sites(bridges2)
+
     # --- Transformation Catalog (Executables and Containers) ----------------------
-    def create_transformation_catalog(self, exec_site_name="condorpool"):
+    def create_transformation_catalog(self):
         self.tc = TransformationCatalog()
         container = Container(
             name="cerebras",
             container_type=Container.SINGULARITY,
             image="file:///ocean/neocortex/cerebras/cbcore_latest.sif",
-            image_site="neocortex",
+            image_site=NEOCORTEX_SITE_HANDLE,
         )
         self.tc.add_containers(container)
 
         step1_pretrain = Transformation(
             name="step1_pretrain",
             site="local",
+            # TODO: site="notlocal",
             pfn=BASE_DIR + "/step1/run_pretrain.sh",
             is_stageable=True,
             container=container,
@@ -205,12 +242,6 @@ class CerebrasPyTorchWorkflow():
             is_stageable=True,
             container=container,
         )
-        step3_inference.add_profiles(Namespace.PEGASUS, key="cores", value="1")
-        step3_inference.add_profiles(Namespace.PEGASUS, key="runtime", value="3600")
-        step3_inference.add_profiles(Namespace.PEGASUS, key="container.launcher", value="srun")
-        step3_inference.add_profiles(Namespace.PEGASUS, key="container.launcher.arguments", value="--kill-on-bad-exit")
-        step3_inference.add_profiles(Namespace.PEGASUS, key="glite.arguments",
-                                     value="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
         step3_inference.add_pegasus_profiles(cores=1, runtime="3600",
                                              container_launcher="srun",
                                              container_launcher_arguments="--kill-on-bad-exit",
@@ -227,7 +258,7 @@ class CerebrasPyTorchWorkflow():
         self.wf = Workflow(self.wf_name)
 
         # --- Workflow -----------------------------------------------------
-        # the main input for the workflow is config file and the modelzoo checkout
+        # the input files required for the workflow are tracked in the Replica Catalog.
         modelzoo_config_params = File(
             "modelzoo/modelzoo/fc_mnist/pytorch/configs/params.yaml"
         )
@@ -308,7 +339,6 @@ class CerebrasPyTorchWorkflow():
         )
         training_job.add_inputs(modelzoo_compiled)
         training_job.add_outputs(modelzoo_trained, stage_out=True)
-        # training_job.add_outputs(modelzoo_trained_checkpoints, stage_out=True)
         training_job.set_stdout("train-{}.out".format(now))
         training_job.set_stderr("train-{}.err".format(now))
 
