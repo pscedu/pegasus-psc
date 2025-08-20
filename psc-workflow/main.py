@@ -13,18 +13,17 @@ https://portal.neocortex.psc.edu/docs/running-jobs.html
 
 import argparse
 import datetime
+import getpass
 import logging
 import os
 import shutil
 import sys
-import getpass
 
 from Pegasus.api import Container, Grid, Scheduler, SupportedJobs
 from Pegasus.api import Directory
 from Pegasus.api import File
 from Pegasus.api import FileServer
 from Pegasus.api import Job
-from Pegasus.api import Namespace
 from Pegasus.api import Operation
 from Pegasus.api import Properties
 from Pegasus.api import ReplicaCatalog
