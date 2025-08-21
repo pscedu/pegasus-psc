@@ -50,6 +50,7 @@ USER = getpass.getuser()
 NEOCORTEX_SITE_HANDLE = "neocortex"
 BRIDGES2_SITE_HANDLE = "bridges2"
 
+DUMMY="dummy/"  # Set to "" when switching to use the real files.
 # from IPython.display import Image; Image(filename='graph.png')
 
 
@@ -152,7 +153,7 @@ class CerebrasPyTorchWorkflow:
                 FileServer("file://" + local_storage_dir, Operation.ALL)
             ),
         )
-        # TODO: local.add_pegasus_profile(SSH_PRIVATE_KEY=WF_SSH_KEY_PATH)
+        # TODO review line: local.add_pegasus_profile(SSH_PRIVATE_KEY=WF_SSH_KEY_PATH)
         self.sc.add_sites(local)
 
         # the neocortex site
@@ -189,7 +190,7 @@ class CerebrasPyTorchWorkflow:
             Grid(grid_type=Grid.BATCH, scheduler_type=Scheduler.SLURM, contact=login_host,
                  job_type=SupportedJobs.COMPUTE)
         )
-        # TODO
+        # TODO: Update PEGASUS_HOME path.
         bridges2.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
         bridges2.add_pegasus_profile(
             style="ssh",
@@ -214,8 +215,8 @@ class CerebrasPyTorchWorkflow:
         step1_pretrain = Transformation(
             name="step1_pretrain",
             site="local",
-            # TODO: site="notlocal",
-            pfn=BASE_DIR + "/step1/run_pretrain.sh",
+            # TODO review differences between local and notlocal: site="notlocal",
+            pfn=BASE_DIR + f"/step1/{DUMMY}run_pretrain.sh",
             is_stageable=True,
             container=container,
         )
@@ -226,7 +227,7 @@ class CerebrasPyTorchWorkflow:
         step2_regression = Transformation(
             name="step2_regression",
             site="local",
-            pfn=BASE_DIR + "/step2/run_regression.sh",
+            pfn=BASE_DIR + f"/step2/{DUMMY}run_regression.sh",
             is_stageable=True,
             container=container,
         )
@@ -237,7 +238,7 @@ class CerebrasPyTorchWorkflow:
         step3_inference = Transformation(
             name="train",
             site="local",
-            pfn=BASE_DIR + "/executables/train.sh",
+            pfn=BASE_DIR + f"/step3/{DUMMY}run_inference",
             is_stageable=True,
             container=container,
         )
@@ -258,13 +259,19 @@ class CerebrasPyTorchWorkflow:
 
         # --- Workflow -----------------------------------------------------
         # the input files required for the workflow are tracked in the Replica Catalog.
+        # TODO: Switch file name
         modelzoo_config_params = File(
             "modelzoo/modelzoo/fc_mnist/pytorch/configs/params.yaml"
         )
+        # TODO: Switch file name
         modelzoo_raw = File("modelzoo-raw.tgz")
+
+        # TODO: Update path
         self.rc.add_replica(
             "local", modelzoo_config_params.lfn, "{}/input/params.yaml".format(BASE_DIR)
         )
+
+        # TODO: Update path
         self.rc.add_replica(
             "local", modelzoo_raw.lfn, "{}/input/modelzoo-raw.tgz".format(BASE_DIR)
         )
@@ -376,7 +383,7 @@ class CerebrasPyTorchWorkflow:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    parser = argparse.ArgumentParser(description="generate a sample cerebras PyTorch pegasus workflow")
+    parser = argparse.ArgumentParser(description="Generate a sample multi-cluster Pegasus workflow at PSC")
     parser.add_argument('--project', dest='project', default=None, required=True,
                         help='Specifies the project/grantid of your project')
     args = parser.parse_args(sys.argv[1:])
