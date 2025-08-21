@@ -58,33 +58,33 @@ class CerebrasPyTorchWorkflow:
 
     # --- Init ---------------------------------------------------------------------
     def __init__(self, project=None):
-        self.wf = None
-        self.sc = None
-        self.tc = None
-        self.rc = None
-        self.props = None
-        self.wf_name = "psc-workflow"
+        self.workflow = None
+        self.site_catalog = None
+        self.transformation_catalog = None
+        self.replica_catalog = None
+        self.properties = None
+        self.workflow_name = "psc-workflow"
         self.project = project
         # Log
         self.log = logging.getLogger(__name__)
 
     # --- Write files in directory -------------------------------------------------
     def write(self):
-        if not self.sc is None:
-            self.sc.write()
-        self.props.write()
-        self.rc.write()
-        self.tc.write()
+        if not self.site_catalog is None:
+            self.site_catalog.write()
+        self.properties.write()
+        self.replica_catalog.write()
+        self.transformation_catalog.write()
 
         try:
-            self.wf.write()
+            self.workflow.write()
         except PegasusClientError as e:
             print(e)
 
     # --- Plan and Submit the workflow ----------------------------------------------
     def plan_submit(self):
         try:
-            self.wf.plan(
+            self.workflow.plan(
                 conf="pegasus.properties",
                 sites=[NEOCORTEX_SITE_HANDLE, ],  # BRIDGES2_SITE_HANDLE],
                 output_site="local",
@@ -100,48 +100,48 @@ class CerebrasPyTorchWorkflow:
     # --- Get status of the workflow -----------------------------------------------
     def status(self):
         try:
-            self.wf.status(long=True)
+            self.workflow.status(long=True)
         except PegasusClientError as e:
             print(e)
 
     # --- Wait for the workflow to finish -----------------------------------------------
     def wait(self):
         try:
-            self.wf.wait()
+            self.workflow.wait()
         except PegasusClientError as e:
             print(e)
 
     # --- Get statistics of the workflow -----------------------------------------------
     def statistics(self):
         try:
-            self.wf.statistics()
+            self.workflow.statistics()
         except PegasusClientError as e:
             print(e)
 
     # --- Configuration (Pegasus Properties) ---------------------------------------
     def create_pegasus_properties(self):
-        self.props = Properties()
-        self.props["pegasus.integrity.checking"] = "none"
-        self.props[
+        self.properties = Properties()
+        self.properties["pegasus.integrity.checking"] = "none"
+        self.properties[
             "pegasus.catalog.workflow.amqp.url"
         ] = "amqp://friend:donatedata@msgs.pegasus.isi.edu:5672/prod/workflows"
-        self.props["pegasus.data.configuration"] = "nonsharedfs"
-        self.props["pegasus.mode"] = "development"
+        self.properties["pegasus.data.configuration"] = "nonsharedfs"
+        self.properties["pegasus.mode"] = "development"
         # data transfers for the jobs should happen
         # on the HOSTOS not inside the container
-        self.props["pegasus.transfer.container.onhost"] = True
+        self.properties["pegasus.transfer.container.onhost"] = True
         # we dont want any pegasus worker package
         # to be installed inside the container
-        self.props["pegasus.transfer.worker.package"] = True
-        self.props["pegasus.transfer.worker.package.autodownload"] = False
+        self.properties["pegasus.transfer.worker.package"] = True
+        self.properties["pegasus.transfer.worker.package.autodownload"] = False
         # enable symlinking
         # props["pegasus.transfer.links"] = True
-        self.props.write()
+        self.properties.write()
         return
 
     # --- Site Catalog -------------------------------------------------------------
     def create_sites_catalog(self):
-        self.sc = SiteCatalog()
+        self.site_catalog = SiteCatalog()
         # add a local site with an optional job env file to use for compute jobs
         shared_scratch_dir = "/{}/workflows/LOCAL/scratch".format("${PROJECT}")
         local_storage_dir = "{}/storage".format(BASE_DIR)
@@ -154,7 +154,7 @@ class CerebrasPyTorchWorkflow:
             ),
         )
         # TODO review line: local.add_pegasus_profile(SSH_PRIVATE_KEY=WF_SSH_KEY_PATH)
-        self.sc.add_sites(local)
+        self.site_catalog.add_sites(local)
 
         # the neocortex site
         shared_scratch_dir = "/{}/workflows/NEOCORTEX/scratch".format("${PROJECT}")
@@ -168,6 +168,7 @@ class CerebrasPyTorchWorkflow:
             ),
         )
         neocortex.add_condor_profile(grid_resource="batch slurm")
+        # TODO, review:
         #    neocortex.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
         neocortex.add_pegasus_profile(
             style="glite",
@@ -176,7 +177,7 @@ class CerebrasPyTorchWorkflow:
             runtime=1800,
             project=self.project,
         )
-        self.sc.add_sites(neocortex)
+        self.site_catalog.add_sites(neocortex)
 
         # bridges2 site
         shared_scratch_dir = "/{}/workflows/BRIDGES/scratch".format("${PROJECT}")
@@ -199,18 +200,18 @@ class CerebrasPyTorchWorkflow:
             runtime=1800,
             project=self.project,
         )
-        self.sc.add_sites(bridges2)
+        self.site_catalog.add_sites(bridges2)
 
     # --- Transformation Catalog (Executables and Containers) ----------------------
     def create_transformation_catalog(self):
-        self.tc = TransformationCatalog()
+        self.transformation_catalog = TransformationCatalog()
         container = Container(
             name="cerebras",
             container_type=Container.SINGULARITY,
             image="file:///ocean/neocortex/cerebras/cbcore_latest.sif",
             image_site=NEOCORTEX_SITE_HANDLE,
         )
-        self.tc.add_containers(container)
+        self.transformation_catalog.add_containers(container)
 
         step1_pretrain = Transformation(
             name="step1_pretrain",
@@ -220,9 +221,11 @@ class CerebrasPyTorchWorkflow:
             is_stageable=True,
             container=container,
         )
-        step1_pretrain.add_pegasus_profiles(cores=1, runtime="900",
-                                            glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
-        self.tc.add_transformations(step1_pretrain)
+        step1_pretrain.add_pegasus_profiles(cores=1, runtime="300",
+                                            container_launcher="srun",
+                                            container_launcher_arguments="--kill-on-bad-exit",
+                                            glite_arguments="--cpus-per-task=14")
+        self.transformation_catalog.add_transformations(step1_pretrain)
 
         step2_regression = Transformation(
             name="step2_regression",
@@ -231,9 +234,11 @@ class CerebrasPyTorchWorkflow:
             is_stageable=True,
             container=container,
         )
-        step2_regression.add_pegasus_profiles(cores=1, runtime="900",
-                                              glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
-        self.tc.add_transformations(step2_regression)
+        step2_regression.add_pegasus_profiles(cores=1, runtime="300",
+                                              container_launcher="srun",
+                                              container_launcher_arguments="--kill-on-bad-exit",
+                                              glite_arguments="--cpus-per-task=14")
+        self.transformation_catalog.add_transformations(step2_regression)
 
         step3_inference = Transformation(
             name="train",
@@ -242,20 +247,20 @@ class CerebrasPyTorchWorkflow:
             is_stageable=True,
             container=container,
         )
-        step3_inference.add_pegasus_profiles(cores=1, runtime="3600",
+        step3_inference.add_pegasus_profiles(cores=1, runtime="300",
                                              container_launcher="srun",
                                              container_launcher_arguments="--kill-on-bad-exit",
-                                             glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1 --qos=low")
-        self.tc.add_transformations(step3_inference)
+                                             glite_arguments="--cpus-per-task=14")
+        self.transformation_catalog.add_transformations(step3_inference)
 
     # --- Replica Catalog ----------------------------------------------------------
     def create_replica_catalog(self):
-        self.rc = ReplicaCatalog()
+        self.replica_catalog = ReplicaCatalog()
         # most of the replicas are added when creating the workflow
 
     # --- Create Workflow ----------------------------------------------------------
     def create_workflow(self):
-        self.wf = Workflow(self.wf_name)
+        self.workflow = Workflow(self.workflow_name)
 
         # --- Workflow -----------------------------------------------------
         # the input files required for the workflow are tracked in the Replica Catalog.
@@ -267,12 +272,12 @@ class CerebrasPyTorchWorkflow:
         modelzoo_raw = File("modelzoo-raw.tgz")
 
         # TODO: Update path
-        self.rc.add_replica(
+        self.replica_catalog.add_replica(
             "local", modelzoo_config_params.lfn, "{}/input/params.yaml".format(BASE_DIR)
         )
 
         # TODO: Update path
-        self.rc.add_replica(
+        self.replica_catalog.add_replica(
             "local", modelzoo_raw.lfn, "{}/input/modelzoo-raw.tgz".format(BASE_DIR)
         )
 
@@ -303,12 +308,12 @@ class CerebrasPyTorchWorkflow:
             "t10k-labels-idx1-ubyte.gz",
         ]:
             train_file = File("{}/{}".format(prefix, file))
-            self.rc.add_replica(
+            self.replica_catalog.add_replica(
                 "nonlocal",
                 train_file.lfn,
                 "http://yann.lecun.com/exdb/mnist/{}".format(file),
             )
-            self.rc.add_replica(
+            self.replica_catalog.add_replica(
                 "nonlocal",
                 train_file.lfn,
                 "https://ossci-datasets.s3.amazonaws.com/mnist/{}".format(file),
@@ -320,7 +325,7 @@ class CerebrasPyTorchWorkflow:
             # scripts do rename of the files after job completes
             validate_job.add_outputs(File("{}_{}".format("validate", file)), stage_out=True)
 
-        self.wf.add_jobs(validate_job)
+        self.workflow.add_jobs(validate_job)
 
         # compile job
         compile_job = Job("compile", node_label="compile_model")
@@ -335,7 +340,7 @@ class CerebrasPyTorchWorkflow:
             # scripts do rename of the files after job completes
             compile_job.add_outputs(File("{}_{}".format("compile", file)), stage_out=True)
 
-        self.wf.add_jobs(compile_job)
+        self.workflow.add_jobs(compile_job)
 
         # training job
         now = datetime.datetime.now().strftime("%s")
@@ -357,7 +362,7 @@ class CerebrasPyTorchWorkflow:
             training_job.add_outputs(File("{}_{}".format("train", file)), stage_out=True)
 
         training_job.add_outputs(File("train_performance.json"), stage_out=True)
-        self.wf.add_jobs(training_job)
+        self.workflow.add_jobs(training_job)
 
     def __call__(self):
         self.log.info("Creating workflow properties...")
