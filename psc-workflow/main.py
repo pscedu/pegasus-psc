@@ -12,26 +12,13 @@ https://portal.neocortex.psc.edu/docs/running-jobs.html
 """
 
 import argparse
-import datetime
 import getpass
 import logging
 import os
 import shutil
 import sys
 
-from Pegasus.api import Container, Grid, Scheduler, SupportedJobs
-from Pegasus.api import Directory
-from Pegasus.api import File
-from Pegasus.api import FileServer
-from Pegasus.api import Job
-from Pegasus.api import Operation
-from Pegasus.api import Properties
-from Pegasus.api import ReplicaCatalog
-from Pegasus.api import Site
-from Pegasus.api import SiteCatalog
-from Pegasus.api import Transformation
-from Pegasus.api import TransformationCatalog
-from Pegasus.api import Workflow
+from Pegasus.api import *
 from Pegasus.client._client import PegasusClientError
 
 logging.basicConfig(level=logging.DEBUG)
@@ -274,7 +261,7 @@ class CerebrasPyTorchWorkflow:
         crystal_slices_file = File("crystal_slices")
         self.replica_catalog.add_replica(
             site="local", lfn=crystal_slices_file.lfn,
-            path="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_slices_Final.txt"
+            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_slices_Final.txt"
         )
         pretraining_trial_tar = File("pretraining_trial.tgz")
 
@@ -282,7 +269,7 @@ class CerebrasPyTorchWorkflow:
         self.replica_catalog.add_replica(
             site="local", lfn=slices_vocab_file.lfn,
             # TODO: Full path to the file
-            path="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_slices_Final.txt"
+            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_slices_Final.txt"
         )
         slices_csvfiles_tar = File("slices_csvfiles.tgz")
 
@@ -290,12 +277,12 @@ class CerebrasPyTorchWorkflow:
         regression_params_file = File("regression_params.yaml")
         self.replica_catalog.add_replica(
             site="local", lfn=regression_params_file.lfn,
-            path="/ocean/projects/sys890003p/spagaria/project1/dana/regression_params.yaml"
+            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/regression_params.yaml"
         )
         roberta_params_file = File("roberta_params.yaml")
         self.replica_catalog.add_replica(
             site="local", lfn=roberta_params_file.lfn,
-            path=f"{BASE_DIR}/step1/{DUMMY}roberta_params.yaml"
+            pfn=f"{BASE_DIR}/step1/{DUMMY}roberta_params.yaml"
         )
 
         step1_pretrain_job = Job("step1_pretrain", node_label="step1_pretrain_label")
@@ -321,7 +308,7 @@ class CerebrasPyTorchWorkflow:
         checkpoint_file = File("checkpoint.mdl")
         self.replica_catalog.add_replica(
             site="local", lfn=regression_params_file.lfn,
-            path="./materials_string_regression/checkpoint_15000.mdl"
+            pfn="./materials_string_regression/checkpoint_15000.mdl"
         )
 
         step3_inference_job = Job("step3_inference", node_label="step3_inference_label")
