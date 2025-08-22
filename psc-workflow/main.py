@@ -58,12 +58,12 @@ class CerebrasPyTorchWorkflow:
 
     # --- Init ---------------------------------------------------------------------
     def __init__(self, project=None):
-        self.workflow = None
-        self.site_catalog = None
-        self.transformation_catalog = None
-        self.replica_catalog = None
+        self.site_catalog = SiteCatalog()
+        self.transformation_catalog = TransformationCatalog()
+        self.replica_catalog = ReplicaCatalog()
         self.properties = None
         self.workflow_name = "psc-workflow"
+        self.workflow = Workflow(name=self.workflow_name)
         self.project = project
         # Log
         self.log = logging.getLogger(__name__)
@@ -141,7 +141,6 @@ class CerebrasPyTorchWorkflow:
 
     # --- Site Catalog -------------------------------------------------------------
     def create_sites_catalog(self):
-        self.site_catalog = SiteCatalog()
         # add a local site with an optional job env file to use for compute jobs
         shared_scratch_dir = "/{}/workflows/LOCAL/scratch".format("${PROJECT}")
         local_storage_dir = "{}/storage".format(BASE_DIR)
@@ -179,28 +178,31 @@ class CerebrasPyTorchWorkflow:
         )
         self.site_catalog.add_sites(neocortex)
 
-        # bridges2 site
-        shared_scratch_dir = "/{}/workflows/BRIDGES/scratch".format("${PROJECT}")
-        login_host = "bridges2.psc.edu"
-        bridges2 = Site(BRIDGES2_SITE_HANDLE).add_directories(
-            Directory(
-                Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True
-            ).add_file_servers(FileServer("file:///" + shared_scratch_dir, Operation.ALL))
-        )
-        bridges2.add_grids(
-            Grid(grid_type=Grid.BATCH, scheduler_type=Scheduler.SLURM, contact=login_host,
-                 job_type=SupportedJobs.COMPUTE)
-        )
-        # TODO: Update PEGASUS_HOME path.
-        bridges2.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
-        bridges2.add_pegasus_profile(
-            style="ssh",
-            queue="RM-shared",
-            auxillary_local=True,
-            runtime=1800,
-            project=self.project,
-        )
-        self.site_catalog.add_sites(bridges2)
+        # # bridges2 site
+        # shared_scratch_dir = "/{}/workflows/BRIDGES/scratch".format("${PROJECT}")
+        # login_host = "bridges2.psc.edu"
+        # bridges2 = Site(BRIDGES2_SITE_HANDLE).add_directories(
+        #     Directory(
+        #         Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True
+        #     ).add_file_servers(FileServer("file:///" + shared_scratch_dir, Operation.ALL))
+        # )
+        # bridges2.add_grids(
+        #     Grid(grid_type=Grid.BATCH, scheduler_type=Scheduler.SLURM, contact=login_host,
+        #          job_type=SupportedJobs.COMPUTE)
+        # )
+        # # TODO: Update PEGASUS_HOME path.
+        # bridges2.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
+        # bridges2.add_pegasus_profile(
+        #     style="ssh",
+        #     queue="RM-shared",
+        #     auxillary_local=True,
+        #     runtime=1800,
+        #     project=self.project,
+        # )
+        # self.site_catalog.add_sites(bridges2)
+
+        # TODO: Is this line needed?
+        # self.workflow.add_site_catalog(sc=self.site_catalog)
 
     # --- Transformation Catalog (Executables and Containers) ----------------------
     def create_transformation_catalog(self):
@@ -241,9 +243,9 @@ class CerebrasPyTorchWorkflow:
         self.transformation_catalog.add_transformations(step2_regression)
 
         step3_inference = Transformation(
-            name="train",
+            name="step3_inference",
             site="local",
-            pfn=BASE_DIR + f"/step3/{DUMMY}run_inference",
+            pfn=BASE_DIR + f"/step3/{DUMMY}run_inference.sh",
             is_stageable=True,
             container=container,
         )
@@ -253,9 +255,12 @@ class CerebrasPyTorchWorkflow:
                                              glite_arguments="--cpus-per-task=14")
         self.transformation_catalog.add_transformations(step3_inference)
 
+        # TODO: Is this line needed?
+        # self.workflow.add_transformation_catalog(tc=self.transformation_catalog)
+
     # --- Replica Catalog ----------------------------------------------------------
     def create_replica_catalog(self):
-        self.replica_catalog = ReplicaCatalog()
+        pass
         # most of the replicas are added when creating the workflow
 
     # --- Create Workflow ----------------------------------------------------------
@@ -264,105 +269,21 @@ class CerebrasPyTorchWorkflow:
 
         # --- Workflow -----------------------------------------------------
         # the input files required for the workflow are tracked in the Replica Catalog.
-        # TODO: Switch file name
-        modelzoo_config_params = File(
-            "modelzoo/modelzoo/fc_mnist/pytorch/configs/params.yaml"
-        )
-        # TODO: Switch file name
-        modelzoo_raw = File("modelzoo-raw.tgz")
 
-        # TODO: Update path
-        self.replica_catalog.add_replica(
-            "local", modelzoo_config_params.lfn, "{}/input/params.yaml".format(BASE_DIR)
-        )
+        ### Step 1: Pre-training
+        step1_pretrain_job = Job("step1_pretrain", node_label="step1_pretrain_label")
+        self.workflow.add_jobs(step1_pretrain_job)
+        ###
 
-        # TODO: Update path
-        self.replica_catalog.add_replica(
-            "local", modelzoo_raw.lfn, "{}/input/modelzoo-raw.tgz".format(BASE_DIR)
-        )
+        ### Step 2: Regression
+        step2_regression_job = Job("step2_regression", node_label="step2_regression_label")
+        self.workflow.add_jobs(step2_regression_job)
+        ###
 
-        # some output of modelzoo checkout at each stage
-        modelzoo_validated = File("modelzoo-validated.tgz")
-        modelzoo_compiled = File("modelzoo-compiled.tgz")
-        modelzoo_trained = File("modelzoo-trained.tgz")
-        modelzoo_trained_checkpoints = File("model-checkpoints.tgz")
-
-        # some logs that we always stageout
-        cerebras_logs = ["fabric.json", "run_summary.json", "params.yaml"]
-
-        # validate job
-        validate_job = Job("validate", node_label="validate_model")
-        validate_job.add_args(
-            "--mode train --validate_only --params configs/params.yaml  --model_dir model"
-        )
-        validate_job.add_inputs(modelzoo_raw)
-        validate_job.add_inputs(modelzoo_config_params)
-        validate_job.add_outputs(modelzoo_validated, stage_out=True)
-        # add files against which we will train as inputs
-        # instead of letting the code download automatically
-        prefix = "modelzoo/modelzoo/fc_mnist/pytorch/data/mnist/train/MNIST/raw"
-        for file in [
-            "train-images-idx3-ubyte.gz",
-            "train-labels-idx1-ubyte.gz",
-            "t10k-images-idx3-ubyte.gz",
-            "t10k-labels-idx1-ubyte.gz",
-        ]:
-            train_file = File("{}/{}".format(prefix, file))
-            self.replica_catalog.add_replica(
-                "nonlocal",
-                train_file.lfn,
-                "http://yann.lecun.com/exdb/mnist/{}".format(file),
-            )
-            self.replica_catalog.add_replica(
-                "nonlocal",
-                train_file.lfn,
-                "https://ossci-datasets.s3.amazonaws.com/mnist/{}".format(file),
-            )
-            validate_job.add_inputs(train_file)
-
-        # track some cerebras log files as outputs
-        for file in cerebras_logs:
-            # scripts do rename of the files after job completes
-            validate_job.add_outputs(File("{}_{}".format("validate", file)), stage_out=True)
-
-        self.workflow.add_jobs(validate_job)
-
-        # compile job
-        compile_job = Job("compile", node_label="compile_model")
-        compile_job.add_args(
-            "--mode train --compile_only --params configs/params.yaml --model_dir model"
-        )
-        compile_job.add_inputs(modelzoo_validated)
-        compile_job.add_outputs(modelzoo_compiled, stage_out=True)
-
-        # track some cerebras log files as outputs
-        for file in cerebras_logs:
-            # scripts do rename of the files after job completes
-            compile_job.add_outputs(File("{}_{}".format("compile", file)), stage_out=True)
-
-        self.workflow.add_jobs(compile_job)
-
-        # training job
-        now = datetime.datetime.now().strftime("%s")
-        training_job = Job("train", node_label="train_model")
-        training_job.add_args(
-            "--mode train --params configs/params.yaml --model_dir model --cs_ip $CS_IP_ADDR"
-        )
-        training_job.add_inputs(modelzoo_compiled)
-        training_job.add_outputs(modelzoo_trained, stage_out=True)
-        training_job.set_stdout("train-{}.out".format(now))
-        training_job.set_stderr("train-{}.err".format(now))
-
-        # track some cerebras log files as outputs
-        for file in cerebras_logs:
-            # scripts do rename of the files after job completes
-            if file == "fabric.json":
-                # we dont copy fabric.json
-                continue
-            training_job.add_outputs(File("{}_{}".format("train", file)), stage_out=True)
-
-        training_job.add_outputs(File("train_performance.json"), stage_out=True)
-        self.workflow.add_jobs(training_job)
+        ### Step 3: Inference
+        step3_inference_job = Job("step3_inference", node_label="step3_inference_label")
+        self.workflow.add_jobs(step3_inference_job)
+        ###
 
     def __call__(self):
         self.log.info("Creating workflow properties...")
