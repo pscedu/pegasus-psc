@@ -50,7 +50,7 @@ USER = getpass.getuser()
 NEOCORTEX_SITE_HANDLE = "neocortex"
 BRIDGES2_SITE_HANDLE = "bridges2"
 
-DUMMY="dummy/"  # Set to "" when switching to use the real files.
+DUMMY = "dummy/"  # Set to "" when switching to use the real files.
 # from IPython.display import Image; Image(filename='graph.png')
 
 
@@ -271,18 +271,63 @@ class CerebrasPyTorchWorkflow:
         # the input files required for the workflow are tracked in the Replica Catalog.
 
         ### Step 1: Pre-training
+        crystal_slices_file = File("crystal_slices")
+        self.replica_catalog.add_replica(
+            site="local", lfn=crystal_slices_file.lfn,
+            path="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_slices_Final.txt"
+        )
+        pretraining_trial_tar = File("pretraining_trial.tgz")
+
+        slices_vocab_file = File("slices_vocab")
+        self.replica_catalog.add_replica(
+            site="local", lfn=slices_vocab_file.lfn,
+            # TODO: Full path to the file
+            path="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_slices_Final.txt"
+        )
+        slices_csvfiles_tar = File("slices_csvfiles.tgz")
+
+        model_pretrain_slices_tar = File("model_pretrain_slices.tgz")
+        regression_params_file = File("regression_params.yaml")
+        self.replica_catalog.add_replica(
+            site="local", lfn=regression_params_file.lfn,
+            path="/ocean/projects/sys890003p/spagaria/project1/dana/regression_params.yaml"
+        )
+        roberta_params_file = File("roberta_params.yaml")
+        self.replica_catalog.add_replica(
+            site="local", lfn=roberta_params_file.lfn,
+            path=f"{BASE_DIR}/step1/{DUMMY}roberta_params.yaml"
+        )
+
         step1_pretrain_job = Job("step1_pretrain", node_label="step1_pretrain_label")
+        step1_pretrain_job.add_inputs(crystal_slices_file, slices_vocab_file, roberta_params_file)
+        step1_pretrain_job.add_outputs(pretraining_trial_tar, stage_out=True)
+        step1_pretrain_job.add_outputs(slices_csvfiles_tar, stage_out=True)
+        step1_pretrain_job.add_outputs(model_pretrain_slices_tar, stage_out=True)
+
         self.workflow.add_jobs(step1_pretrain_job)
         ###
 
         ### Step 2: Regression
+        materials_string_regression_tar = File("materials_string_regression.tgz")
+
         step2_regression_job = Job("step2_regression", node_label="step2_regression_label")
+        step2_regression_job.add_inputs(regression_params_file)
+        step2_regression_job.add_outputs(materials_string_regression_tar)
         self.workflow.add_jobs(step2_regression_job)
         ###
 
         ### Step 3: Inference
+        materials_string_inference_file = File("materials_string_inference")
+        checkpoint_file = File("checkpoint.mdl")
+        self.replica_catalog.add_replica(
+            site="local", lfn=regression_params_file.lfn,
+            path="./materials_string_regression/checkpoint_15000.mdl"
+        )
+
         step3_inference_job = Job("step3_inference", node_label="step3_inference_label")
         self.workflow.add_jobs(step3_inference_job)
+        step3_inference_job.add_inputs(checkpoint_file)
+        step3_inference_job.add_outputs(materials_string_inference_file)
         ###
 
     def __call__(self):
