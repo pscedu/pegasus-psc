@@ -15,8 +15,8 @@ BIND_LOCATIONS=/local1/cerebras/data,/local2/cerebras/data,/local3/cerebras/data
 CEREBRAS_CONTAINER=/ocean/neocortex/cerebras/cbcore_latest.sif
 
 #break up the text file
-srun --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER} python prepare_tokenization.py --text_file ./encoding/crystal_slices_Final --output_dir ./pretraining_trial
+python prepare_tokenization.py --text_file ./encoding/crystal_slices_Final --output_dir ./pretraining_trial
 #preprocess the data
-srun --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER} python create_csv_mlm_only.py --metadata_files ./pretraining_trial/meta.txt --input_files_prefix ${ENTRY_LOCATION}/pretraining_trial --vocab_file ./slices_vocab_Final.txt --output_dir ./slices_csvfiles
+python create_csv_mlm_only.py --metadata_files ./pretraining_trial/meta.txt --input_files_prefix ${ENTRY_LOCATION}/pretraining_trial --vocab_file ./slices_vocab_Final.txt --output_dir ./slices_csvfiles
 #run the pre-training on RoBERTa
-srun --kill-on-bad-exit singularity exec --bind ${BIND_LOCATIONS} ${CEREBRAS_CONTAINER} python-pt run_roberta.py --mode train --model_dir ./model_pretrain_slices --params ./roberta_params.yaml --cs_ip ${CS_IP_ADDR}
+python-pt run_roberta.py --mode train --model_dir ./model_pretrain_slices --params ./roberta_params.yaml --cs_ip ${CS_IP_ADDR}
