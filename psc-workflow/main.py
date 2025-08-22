@@ -305,15 +305,10 @@ class CerebrasPyTorchWorkflow:
 
         ### Step 3: Inference
         materials_string_inference_file = File("materials_string_inference")
-        checkpoint_file = File("checkpoint.mdl")
-        self.replica_catalog.add_replica(
-            site="local", lfn=regression_params_file.lfn,
-            pfn="./materials_string_regression/checkpoint_15000.mdl"
-        )
 
         step3_inference_job = Job("step3_inference", node_label="step3_inference_label")
         self.workflow.add_jobs(step3_inference_job)
-        step3_inference_job.add_inputs(checkpoint_file)
+        step3_inference_job.add_inputs(materials_string_regression_tar)
         step3_inference_job.add_outputs(materials_string_inference_file)
         ###
 
