@@ -73,7 +73,7 @@ class CerebrasPyTorchWorkflow:
         try:
             self.workflow.plan(
                 conf="pegasus.properties",
-                sites=[NEOCORTEX_SITE_HANDLE, ],  # BRIDGES2_SITE_HANDLE],
+                sites=[NEOCORTEX_SITE_HANDLE, BRIDGES2_SITE_HANDLE],
                 output_site="local",
                 dir="submit",
                 cleanup="none",
@@ -165,28 +165,28 @@ class CerebrasPyTorchWorkflow:
         )
         self.site_catalog.add_sites(neocortex)
 
-        # # bridges2 site
-        # shared_scratch_dir = "/{}/workflows/BRIDGES/scratch".format("${PROJECT}")
-        # login_host = "bridges2.psc.edu"
-        # bridges2 = Site(BRIDGES2_SITE_HANDLE).add_directories(
-        #     Directory(
-        #         Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True
-        #     ).add_file_servers(FileServer("file:///" + shared_scratch_dir, Operation.ALL))
-        # )
-        # bridges2.add_grids(
-        #     Grid(grid_type=Grid.BATCH, scheduler_type=Scheduler.SLURM, contact=login_host,
-        #          job_type=SupportedJobs.COMPUTE)
-        # )
-        # # TODO: Update PEGASUS_HOME path.
+        # bridges2 site
+        shared_scratch_dir = "/{}/workflows/BRIDGES/scratch".format("${PROJECT}")
+        login_host = "bridges2.psc.edu"
+        bridges2 = Site(BRIDGES2_SITE_HANDLE).add_directories(
+            Directory(
+                Directory.SHARED_SCRATCH, shared_scratch_dir, shared_file_system=True
+            ).add_file_servers(FileServer("file:///" + shared_scratch_dir, Operation.ALL))
+        )
+        bridges2.add_grids(
+            Grid(grid_type=Grid.BATCH, scheduler_type=Scheduler.SLURM, contact=login_host,
+                 job_type=SupportedJobs.COMPUTE)
+        )
+        # TODO: Update PEGASUS_HOME path.
         # bridges2.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
-        # bridges2.add_pegasus_profile(
-        #     style="ssh",
-        #     queue="RM-shared",
-        #     auxillary_local=True,
-        #     runtime=1800,
-        #     project=self.project,
-        # )
-        # self.site_catalog.add_sites(bridges2)
+        bridges2.add_pegasus_profile(
+            style="ssh",
+            queue="RM-shared",
+            auxillary_local=True,
+            runtime=1800,
+            project=self.project,
+        )
+        self.site_catalog.add_sites(bridges2)
 
         # TODO: Is this line needed?
         # self.workflow.add_site_catalog(sc=self.site_catalog)
@@ -221,11 +221,8 @@ class CerebrasPyTorchWorkflow:
             site="local",
             pfn=BASE_DIR + f"/step2/{DUMMY}run_regression.sh",
             is_stageable=True,
-            container=container,
         )
         step2_regression.add_pegasus_profiles(cores=1, runtime="300",
-                                              container_launcher="srun",
-                                              container_launcher_arguments="--kill-on-bad-exit",
                                               glite_arguments="--cpus-per-task=14")
         self.transformation_catalog.add_transformations(step2_regression)
 
@@ -234,11 +231,8 @@ class CerebrasPyTorchWorkflow:
             site="local",
             pfn=BASE_DIR + f"/step3/{DUMMY}run_inference.sh",
             is_stageable=True,
-            container=container,
         )
         step3_inference.add_pegasus_profiles(cores=1, runtime="300",
-                                             container_launcher="srun",
-                                             container_launcher_arguments="--kill-on-bad-exit",
                                              glite_arguments="--cpus-per-task=14")
         self.transformation_catalog.add_transformations(step3_inference)
 
@@ -290,6 +284,7 @@ class CerebrasPyTorchWorkflow:
         step1_pretrain_job.add_outputs(pretraining_trial_tar, stage_out=True)
         step1_pretrain_job.add_outputs(slices_csvfiles_tar, stage_out=True)
         step1_pretrain_job.add_outputs(model_pretrain_slices_tar, stage_out=True)
+        step1_pretrain_job.add_selector_profile(execution_site=NEOCORTEX_SITE_HANDLE)
 
         self.workflow.add_jobs(step1_pretrain_job)
         ###
@@ -300,6 +295,8 @@ class CerebrasPyTorchWorkflow:
         step2_regression_job = Job("step2_regression", node_label="step2_regression_label")
         step2_regression_job.add_inputs(regression_params_file)
         step2_regression_job.add_outputs(materials_string_regression_tar)
+        step2_regression_job.add_selector_profile(execution_site=BRIDGES2_SITE_HANDLE)
+
         self.workflow.add_jobs(step2_regression_job)
         ###
 
@@ -307,9 +304,11 @@ class CerebrasPyTorchWorkflow:
         materials_string_inference_file = File("materials_string_inference")
 
         step3_inference_job = Job("step3_inference", node_label="step3_inference_label")
-        self.workflow.add_jobs(step3_inference_job)
         step3_inference_job.add_inputs(materials_string_regression_tar)
         step3_inference_job.add_outputs(materials_string_inference_file)
+        step3_inference_job.add_selector_profile(execution_site=BRIDGES2_SITE_HANDLE)
+
+        self.workflow.add_jobs(step3_inference_job)
         ###
 
     def __call__(self):
