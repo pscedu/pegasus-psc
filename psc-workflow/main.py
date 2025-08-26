@@ -263,30 +263,18 @@ class CerebrasPyTorchWorkflow:
             site="local", lfn=tokenizer_input_file.lfn,
             pfn="/ocean/projects/sys890003p/spagaria/project1/dana/tokenizer/materials_string_OCELOT.txt"
         )
-        slices_csvfiles_tar = File("slices_csvfiles.tgz")
 
+        roberta_params_file = File("roberta_params_OCELOT_MS.yaml")
         self.replica_catalog.add_replica(
             site="local", lfn=roberta_params_file.lfn,
             pfn=f"{BASE_DIR}/step1/{DUMMY}roberta_params_OCELOT_MS.yaml"
         )
 
-        model_pretrain_slices_tar = File("model_pretrain_slices.tgz")
-        regression_params_file = File("regression_params.yaml")
-        self.replica_catalog.add_replica(
-            site="local", lfn=regression_params_file.lfn,
-            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/regression_params.yaml"
-        )
-        roberta_params_file = File("roberta_params.yaml")
-        self.replica_catalog.add_replica(
-            site="local", lfn=roberta_params_file.lfn,
-            pfn=f"{BASE_DIR}/step1/{DUMMY}roberta_params.yaml"
-        )
+        pretrain_output_tar = File("pretrain_OCELOT.tgz")
 
         step1_pretrain_job = Job("step1_pretrain", node_label="step1_pretrain_label")
-        step1_pretrain_job.add_inputs(crystal_slices_file, slices_vocab_file, roberta_params_file)
-        step1_pretrain_job.add_outputs(pretraining_trial_tar, stage_out=True)
-        step1_pretrain_job.add_outputs(slices_csvfiles_tar, stage_out=True)
-        step1_pretrain_job.add_outputs(model_pretrain_slices_tar, stage_out=True)
+        step1_pretrain_job.add_inputs(encoding_input_file, tokenizer_input_file, roberta_params_file)
+        step1_pretrain_job.add_outputs(pretrain_output_tar, stage_out=True)
         step1_pretrain_job.add_selector_profile(execution_site=NEOCORTEX_SITE_HANDLE)
 
         self.workflow.add_jobs(step1_pretrain_job)
