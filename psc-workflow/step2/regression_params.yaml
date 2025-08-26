@@ -2,7 +2,7 @@
 
 train_input:
     data_processor: "BertCSVRegressionDataProcessor"
-    data_dir: "/ocean/projects/sys890003p/spagaria/project1/dana/materials_string_regression"
+    data_dir: "/ocean/projects/sys890003p/spagaria/project1/dana/regression_density"
     vocab_file: "/ocean/projects/sys890003p/spagaria/project1/dana/tokenizer/materials_string_OCELOT.txt"
     max_sequence_length: 512
     batch_size: 16
@@ -13,7 +13,7 @@ train_input:
 
 eval_input:
     data_processor: "BertCSVRegressionDataProcessor"
-    data_dir: "/ocean/projects/sys890003p/spagaria/project1/dana/materials_string_regression"
+    data_dir: "/ocean/projects/sys890003p/spagaria/project1/dana/regression_density"
     vocab_file: "/ocean/projects/sys890003p/spagaria/project1/dana/tokenizer/materials_string_OCELOT.txt"
     max_sequence_length: 512
     batch_size: 16
