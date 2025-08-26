@@ -5,7 +5,9 @@
 train_input:
     data_processor: "BertCSVDynamicMaskDataProcessor"
     #data_dir: "/local1/cerebras/data/openwebtext/owt_bert_pt/train_cased_msl512_mlm_only_unmasked/"
-    data_dir: './trial3/csvs/train'
+    data_dir: './trial3/csvs/train'  # Any of the /ocean/projects/sys890003p/spagaria/project1/dana/pretrain_* folders.
+      # i.e. pretrain_OCELOT/pretrain_MS_0.0001
+      # /ocean/projects/sys890003p/spagaria/project1/dana/pretrain_OCELOT/pretrain_MS_0.0001/csvs/val
 #    vocab_file: "../../vocab/google_research_cased_L-12_H-768_A-12.txt"
     vocab_file: './tokenizer/slices_vocab_OCELOT.txt'
     max_sequence_length: 512

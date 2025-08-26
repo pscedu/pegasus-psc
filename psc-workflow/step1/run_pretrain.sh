@@ -14,9 +14,11 @@ ENTRY_LOCATION=$PROJECT/project1/dana
 BIND_LOCATIONS=/local1/cerebras/data,/local2/cerebras/data,/local3/cerebras/data,/local4/cerebras/data,/ocean/neocortex/cerebras/data,${PROJECT},/ocean/projects/cis250115p/spagaria
 CEREBRAS_CONTAINER=/ocean/neocortex/cerebras/cbcore_latest.sif
 
+mkdir model_pretrain_slices
+
 #break up the text file
-python prepare_tokenization.py --text_file ./encoding/crystal_slices_Final --output_dir ./pretraining_trial
+python prepare_tokenization.py --text_file ./encoding/crystal_slices_Final --output_dir ${ENTRY_LOCATION}/pretraining_trial
 #preprocess the data
-python create_csv_mlm_only.py --metadata_files ./pretraining_trial/meta.txt --input_files_prefix ${ENTRY_LOCATION}/pretraining_trial --vocab_file ./slices_vocab_Final.txt --output_dir ./slices_csvfiles
+python create_csv_mlm_only.py --metadata_files ./pretraining_trial/meta.txt --input_files_prefix ${ENTRY_LOCATION}/pretraining_trial --vocab_file ./tokenizer/slices_vocab_Final.txt --output_dir ./slices_csvfiles
 #run the pre-training on RoBERTa
 python-pt run_roberta.py --mode train --model_dir ./model_pretrain_slices --params ./roberta_params.yaml --cs_ip ${CS_IP_ADDR}
