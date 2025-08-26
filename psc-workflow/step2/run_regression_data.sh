@@ -15,4 +15,4 @@ conda activate /jet/home/spagaria/.conda/envs/shreya
 # while running robocrys use the following conda environment
 # conda activate /jet/home/spagaria/.conda/envs/shreya
 
-python create_regression_csv.py --data_dir /ocean/projects/sys890003p/spagaria/project1/dana/Merged_Dataset/OCELOT --encoding materials_string --outdir /ocean/projects/sys890003p/spagaria/project1/dana/regression_OCELOT/ms_OCELOT --train_val_split 0.8
+python3 create_regression_csv.py --data_dir /ocean/projects/sys890003p/spagaria/project1/dana/Merged_Dataset/OCELOT --encoding materials_string --outdir /ocean/projects/sys890003p/spagaria/project1/dana/regression_OCELOT/ms_OCELOT --train_val_split 0.8

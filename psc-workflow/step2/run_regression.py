@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 import sys
 
-# sys.path.append(os.path.join(os.path.dirname(__file__), "../../../../../.."))
-sys.path.append('/ocean/projects/cis250115p/spagaria/modelzoo')
+MODELZOO_PATH = os.getenv(key='MODELZOO_PATH', default='/ocean/neocortex/cerebras/modelzoo')
+sys.path.append(MODELZOO_PATH)
+
 from modelzoo.common.pytorch.run_utils import run
 from modelzoo.transformers.pytorch.bert.fine_tuning.classifier.data import (
     eval_input_dataloader,
