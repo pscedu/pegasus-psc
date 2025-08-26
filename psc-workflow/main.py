@@ -252,20 +252,23 @@ class CerebrasPyTorchWorkflow:
         # the input files required for the workflow are tracked in the Replica Catalog.
 
         ### Step 1: Pre-training
-        crystal_slices_file = File("crystal_slices")
+        encoding_input_file = File("encoding_input_file")
         self.replica_catalog.add_replica(
-            site="local", lfn=crystal_slices_file.lfn,
-            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_slices_Final.txt"
+            site="local", lfn=encoding_input_file.lfn,
+            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_materials_string_OCELOT.txt"
         )
-        pretraining_trial_tar = File("pretraining_trial.tgz")
 
-        slices_vocab_file = File("slices_vocab")
+        tokenizer_input_file = File("tokeniker_input_file")
         self.replica_catalog.add_replica(
-            site="local", lfn=slices_vocab_file.lfn,
-            # TODO: Full path to the file
-            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_slices_Final.txt"
+            site="local", lfn=tokenizer_input_file.lfn,
+            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/tokenizer/materials_string_OCELOT.txt"
         )
         slices_csvfiles_tar = File("slices_csvfiles.tgz")
+
+        self.replica_catalog.add_replica(
+            site="local", lfn=roberta_params_file.lfn,
+            pfn=f"{BASE_DIR}/step1/{DUMMY}roberta_params_OCELOT_MS.yaml"
+        )
 
         model_pretrain_slices_tar = File("model_pretrain_slices.tgz")
         regression_params_file = File("regression_params.yaml")

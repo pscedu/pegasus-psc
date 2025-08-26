@@ -9,3 +9,12 @@ Files in step1.zip:
 Notes:
     * The batch script currently only supports training mode (not evaluation).
     * Paths/directories need to be updated in both the script and the provided .yaml file.
+
+
+INPUTs
+  ${ENTRY_LOCATION}/encoding/crystal_materials_string_OCELOT.txt
+  ${ENTRY_LOCATION}/tokenizer/materials_string_OCELOT.txt
+  ${ENTRY_LOCATION}/roberta_params_OCELOT_MS.yaml
+
+OUTPUTs
+  ${ENTRY_LOCATION}/pretrain_OCELOT.tgz

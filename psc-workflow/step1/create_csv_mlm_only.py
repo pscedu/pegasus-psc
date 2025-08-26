@@ -23,10 +23,9 @@ import logging
 import os
 import subprocess as sp
 import sys
-import sys
-sys.path.append('/ocean/projects/cis250115p/spagaria/modelzoo')
-#sys.path.append(os.path.join(os.path.dirname(__file__), "../../../../../.."))
-# sys.path.append('/ocean/projects/cis210015p/danao/modelzoo')
+
+MODELZOO_PATH = os.getenv(key='MODELZOO_PATH', default='/ocean/neocortex/cerebras/modelzoo')
+sys.path.append(MODELZOO_PATH)
 
 from modelzoo.common.input.utils import check_and_create_output_dirs
 from modelzoo.transformers.data_processing.mlm_only_processor import (
@@ -48,22 +47,22 @@ def parse_args():
         required=True,
         nargs='+',
         help="path to text file containing a list of file names "
-        "corresponding to the raw input documents to be "
-        "processed and stored; can handle multiple metadata files "
-        "separated by space",
+             "corresponding to the raw input documents to be "
+             "processed and stored; can handle multiple metadata files "
+             "separated by space",
     )
     parser.add_argument(
         "--multiple_docs_in_single_file",
         action="store_true",
         help="Pass this flag when a single text file contains multiple"
-        " documents separated by <multiple_docs_separator>",
+             " documents separated by <multiple_docs_separator>",
     )
     parser.add_argument(
         "--overlap_size",
         type=int,
         default=None,
         help="overlap size for generating sequences from buffered data for mlm only sequences"
-        "Defaults to None, which sets the overlap to max_seq_len/4.",
+             "Defaults to None, which sets the overlap to max_seq_len/4.",
     )
     parser.add_argument(
         "--buffer_size",
@@ -76,15 +75,15 @@ def parse_args():
         type=str,
         default="\n",
         help="String which separates multiple documents in a single text file. "
-        "If newline character, pass \\n"
-        "There can only be one separator string for all the documents.",
+             "If newline character, pass \\n"
+             "There can only be one separator string for all the documents.",
     )
     parser.add_argument(
         "--single_sentence_per_line",
         action="store_true",
         help="Pass this flag when the document is already split into sentences with"
-        "one sentence in each line and there is no requirement for "
-        "further sentence segmentation of a document ",
+             "one sentence in each line and there is no requirement for "
+             "further sentence segmentation of a document ",
     )
     parser.add_argument(
         "--allow_cross_document_examples",
@@ -96,15 +95,15 @@ def parse_args():
         type=str,
         default="[SEP]",
         help="If examples can span documents, "
-        "use this separator to indicate separate tokens of current and next document",
+             "use this separator to indicate separate tokens of current and next document",
     )
     parser.add_argument(
         '--input_files_prefix',
         type=str,
         default="",
         help='prefix to be added to paths of the input files. '
-        'For example, can be a directory where raw data is stored '
-        'if the paths are relative',
+             'For example, can be a directory where raw data is stored '
+             'if the paths are relative',
     )
     parser.add_argument(
         "--vocab_file", type=str, required=True, help="path to vocabulary",
@@ -114,13 +113,13 @@ def parse_args():
         type=int,
         default=1000,
         help="number of input files to read at a given time for processing. "
-        "Defaults to 1000.",
+             "Defaults to 1000.",
     )
     parser.add_argument(
         "--do_lower_case",
         action="store_true",
         help="pass this flag to lower case the input text; should be "
-        "True for uncased models and False for cased models",
+             "True for uncased models and False for cased models",
     )
     parser.add_argument(
         "--max_seq_length",
@@ -134,16 +133,16 @@ def parse_args():
         type=float,
         default=0.1,
         help="probability of creating sequences which are shorter "
-        "than the maximum sequence length",
+             "than the maximum sequence length",
     )
     parser.add_argument(
         "--min_short_seq_length",
         type=int,
         default=None,
         help="The minimum number of tokens to be present in an example"
-        "if short sequence probability > 0."
-        "If None, defaults to 2 "
-        "Allowed values are [2, max_seq_length - 3)",
+             "if short sequence probability > 0."
+             "If None, defaults to 2 "
+             "Allowed values are [2, max_seq_length - 3)",
     )
     parser.add_argument(
         "--masked_lm_prob",
@@ -167,28 +166,28 @@ def parse_args():
         "--mask_whole_word",
         action="store_true",
         help="whether to use whole word masking rather than per-WordPiece "
-        "masking.",
+             "masking.",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
         default="./csvfiles/",
         help="directory where CSV files will be stored. "
-        "Defaults to ./csvfiles/.",
+             "Defaults to ./csvfiles/.",
     )
     parser.add_argument(
         "--num_output_files",
         type=int,
         default=10,
         help="number of files on disk to separate csv files into. "
-        "Defaults to 10.",
+             "Defaults to 10.",
     )
     parser.add_argument(
         "--name",
         type=str,
         default="preprocessed_data",
         help="name of the dataset; i.e. prefix to use for csv file names. "
-        "Defaults to 'preprocessed_data'.",
+             "Defaults to 'preprocessed_data'.",
     )
     parser.add_argument(
         "--seed", type=int, default=0, help="random seed. Defaults to 0.",
@@ -198,31 +197,30 @@ def parse_args():
 
 
 def create_csv(
-    metadata_files,
-    vocab_file,
-    do_lower_case,
-    max_seq_length,
-    short_seq_prob,
-    mask_whole_word,
-    max_predictions_per_seq,
-    masked_lm_prob,
-    overlap_size,
-    buffer_size,
-    filename_prefix,
-    output_dir,
-    num_output_files,
-    min_short_seq_length=None,
-    multiple_docs_in_single_file=False,
-    multiple_docs_separator="\n",
-    single_sentence_per_line=False,
-    allow_cross_document_examples=False,
-    document_separator_token="[SEP]",
-    inverted_mask=False,
-    seed=None,
-    spacy_model="en",
-    input_files_prefix="",
+        metadata_files,
+        vocab_file,
+        do_lower_case,
+        max_seq_length,
+        short_seq_prob,
+        mask_whole_word,
+        max_predictions_per_seq,
+        masked_lm_prob,
+        overlap_size,
+        buffer_size,
+        filename_prefix,
+        output_dir,
+        num_output_files,
+        min_short_seq_length=None,
+        multiple_docs_in_single_file=False,
+        multiple_docs_separator="\n",
+        single_sentence_per_line=False,
+        allow_cross_document_examples=False,
+        document_separator_token="[SEP]",
+        inverted_mask=False,
+        seed=None,
+        spacy_model="en",
+        input_files_prefix="",
 ):
-
     num_output_files = max(num_output_files, 1)
 
     output_files = [

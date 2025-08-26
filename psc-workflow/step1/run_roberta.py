@@ -15,10 +15,8 @@
 import os
 import sys
 
-#sys.path.append(os.path.join(os.path.dirname(__file__), "../../../.."))
-#sys.path.append('/ocean/projects/cis210015p/danao/modelzoo')
-#CHANGE THIS PATH TO YOUR LOCAL COPY OF THE MODELZOO
-sys.path.append('/ocean/projects/cis250115p/spagaria/modelzoo')
+MODELZOO_PATH = os.getenv(key='MODELZOO_PATH', default='/ocean/neocortex/cerebras/modelzoo')
+sys.path.append(MODELZOO_PATH)
 
 from modelzoo.common.pytorch.run_utils import run
 from modelzoo.transformers.pytorch.bert.data import (
@@ -30,7 +28,6 @@ from modelzoo.transformers.pytorch.bert.utils import set_defaults
 
 
 def main():
-
     run(
         BertForPreTrainingModel,
         train_input_dataloader,

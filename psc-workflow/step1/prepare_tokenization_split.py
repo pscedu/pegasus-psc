@@ -48,7 +48,7 @@ def main():
     parser.add_argument('--seed', type=int, default=42, help="Random seed for shuffling")
     args = parser.parse_args()
 
-    split_up_textfile(args.text_file + '.txt', args.output_dir, args.chunk_size, args.seed)
+    split_up_textfile(args.text_file, args.output_dir, args.chunk_size, args.seed)
 
 if __name__ == "__main__":
     main()
