@@ -206,7 +206,7 @@ class CerebrasPyTorchWorkflow:
             name="step1_pretrain",
             site="local",
             # TODO review differences between local and notlocal: site="notlocal",
-            pfn=BASE_DIR + f"/step1/{DUMMY}run_pretrain.sh",
+            pfn=BASE_DIR + f"/step1/{DUMMY}run_pretrain_split.sh",
             is_stageable=True,
             container=container,
         )
