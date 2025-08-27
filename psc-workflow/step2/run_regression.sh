@@ -11,6 +11,7 @@ module load anaconda3/2022.10
 #put the path to your conda environment here
 conda activate /ocean/projects/sys890003p/spagaria/project1/regression
 
+python3 create_regression_csv.py --data_dir /ocean/projects/sys890003p/spagaria/project1/dana/Merged_Dataset/OCELOT --encoding materials_string --outdir /ocean/projects/sys890003p/spagaria/project1/dana/regression_OCELOT/ms_OCELOT --train_val_split 0.8
 python3 run_regression.py --mode train --model_dir /ocean/projects/sys890003p/spagaria/project1/dana/regression_OCELOT/ms_OCELOT --params /ocean/projects/sys890003p/spagaria/project1/dana/regression_params.yaml --checkpoint_path /ocean/projects/sys890003p/spagaria/project1/dana/pretrain_DOF/pretrain_MS_0.0001/model_pretrain/checkpoint_3000.mdl --is_pretrained_checkpoint
 
 
