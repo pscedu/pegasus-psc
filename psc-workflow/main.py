@@ -202,39 +202,85 @@ class CerebrasPyTorchWorkflow:
         )
         self.transformation_catalog.add_containers(container)
 
-        step1_pretrain = Transformation(
-            name="step1_pretrain",
+        # prepare_tokenization_split
+        prepare_tokenization_split_transformation = Transformation(
+            name="prepare_tokenization_split_transformation",
             site="local",
-            # TODO review differences between local and notlocal: site="notlocal",
-            pfn=BASE_DIR + f"/step1/{DUMMY}run_pretrain_split.sh",
+            pfn=f"{BASE_DIR}/executables/prepare_tokenization_split.sh",
+            is_stageable=True,
+        )
+        prepare_tokenization_split_transformation.add_pegasus_profiles(cores=1, runtime="300",
+                                                                       container_launcher="srun",
+                                                                       container_launcher_arguments="--kill-on-bad-exit",
+                                                                       glite_arguments="--cpus-per-task=28")
+        self.transformation_catalog.add_transformations(prepare_tokenization_split_transformation)
+
+        # create_csv_mlm_only.py train, val, test
+        for mode in "train", "val", "test":
+            create_csv_mlm_only_transformation = Transformation(
+                name=f"create_csv_mlm_only_{mode}_transformation",
+                site="local",
+                pfn=f"{BASE_DIR}/executables/create_csv_mlm_only_{mode}.sh",
+                is_stageable=True,
+            )
+            create_csv_mlm_only_transformation.add_pegasus_profiles(cores=1, runtime="300",
+                                                                    container_launcher="srun",
+                                                                    container_launcher_arguments="--kill-on-bad-exit",
+                                                                    glite_arguments="--cpus-per-task=28")
+            self.transformation_catalog.add_transformations(create_csv_mlm_only_transformation)
+
+        # [Neocortex] run_roberta.py
+        run_roberta_transformation = Transformation(
+            name="run_roberta_transformation",
+            site="local",
+            pfn=f"{BASE_DIR}/executables/run_roberta.sh",
             is_stageable=True,
             container=container,
         )
-        step1_pretrain.add_pegasus_profiles(cores=1, runtime="300",
-                                            container_launcher="srun",
-                                            container_launcher_arguments="--kill-on-bad-exit",
-                                            glite_arguments="--cpus-per-task=14")
-        self.transformation_catalog.add_transformations(step1_pretrain)
+        run_roberta_transformation.add_pegasus_profiles(cores=1, runtime="300",
+                                                        container_launcher="srun",
+                                                        container_launcher_arguments="--kill-on-bad-exit",
+                                                        glite_arguments="--cpus-per-task=28")
+        self.transformation_catalog.add_transformations(run_roberta_transformation)
 
-        step2_regression = Transformation(
-            name="step2_regression",
+        # create_regression_csv.py
+        create_regression_csv_transformation = Transformation(
+            name="create_regression_csv_transformation",
             site="local",
-            pfn=BASE_DIR + f"/step2/{DUMMY}run_regression.sh",
+            pfn=f"{BASE_DIR}/executables/create_regression_csv.sh",
             is_stageable=True,
         )
-        step2_regression.add_pegasus_profiles(cores=1, runtime="300",
-                                              glite_arguments="--cpus-per-task=14")
-        self.transformation_catalog.add_transformations(step2_regression)
+        create_regression_csv_transformation.add_pegasus_profiles(cores=1, runtime="300",
+                                                                  container_launcher="srun",
+                                                                  container_launcher_arguments="--kill-on-bad-exit",
+                                                                  glite_arguments="--cpus-per-task=28")
+        self.transformation_catalog.add_transformations(create_regression_csv_transformation)
 
-        step3_inference = Transformation(
-            name="step3_inference",
+        # run_regression.py
+        run_regression_transformation = Transformation(
+            name="run_regression_transformation",
             site="local",
-            pfn=BASE_DIR + f"/step3/{DUMMY}run_inference.sh",
+            pfn=f"{BASE_DIR}/executables/run_regression.sh",
             is_stageable=True,
         )
-        step3_inference.add_pegasus_profiles(cores=1, runtime="300",
-                                             glite_arguments="--cpus-per-task=14")
-        self.transformation_catalog.add_transformations(step3_inference)
+        run_regression_transformation.add_pegasus_profiles(cores=1, runtime="300",
+                                                           container_launcher="srun",
+                                                           container_launcher_arguments="--kill-on-bad-exit",
+                                                           glite_arguments="--cpus-per-task=28")
+        self.transformation_catalog.add_transformations(run_regression_transformation)
+
+        # run_inference.py
+        run_inference_transformation = Transformation(
+            name="run_inference_transformation",
+            site="local",
+            pfn=f"{BASE_DIR}/executables/run_inference.sh",
+            is_stageable=True,
+        )
+        run_inference_transformation.add_pegasus_profiles(cores=1, runtime="300",
+                                                          container_launcher="srun",
+                                                          container_launcher_arguments="--kill-on-bad-exit",
+                                                          glite_arguments="--cpus-per-task=28")
+        self.transformation_catalog.add_transformations(run_inference_transformation)
 
         # TODO: Is this line needed?
         # self.workflow.add_transformation_catalog(tc=self.transformation_catalog)
@@ -251,56 +297,66 @@ class CerebrasPyTorchWorkflow:
         # --- Workflow -----------------------------------------------------
         # the input files required for the workflow are tracked in the Replica Catalog.
 
-        ### Step 1: Pre-training
-        encoding_input_file = File("encoding_input_file")
-        self.replica_catalog.add_replica(
-            site="local", lfn=encoding_input_file.lfn,
-            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_materials_string_OCELOT.txt"
-        )
+        ## Main Workflow Steps
+        # prepare_tokenization_split.py
+        # create_csv_mlm_only.py train
+        # create_csv_mlm_only.py val
+        # create_csv_mlm_only.py test
+        # [Neocortex] run_roberta.py  }
+        # create_regression_csv.py    } => run_regression.py => run_inference.py => End
 
-        tokenizer_input_file = File("tokeniker_input_file")
-        self.replica_catalog.add_replica(
-            site="local", lfn=tokenizer_input_file.lfn,
-            pfn="/ocean/projects/sys890003p/spagaria/project1/dana/tokenizer/materials_string_OCELOT.txt"
-        )
+        ## Parallel Steps
+        prepare_tokenization_split_job = Job(transformation="prepare_tokenization_split_transformation",
+                                             node_label="prepare_tokenization_split_label")
+        self.workflow.add_jobs(prepare_tokenization_split_job)
 
-        roberta_params_file = File("roberta_params_OCELOT_MS.yaml")
-        self.replica_catalog.add_replica(
-            site="local", lfn=roberta_params_file.lfn,
-            pfn=f"{BASE_DIR}/step1/{DUMMY}roberta_params_OCELOT_MS.yaml"
-        )
+        create_csv_mlm_only_train_job = Job(transformation="create_csv_mlm_only_train_transformation",
+                                            node_label="create_csv_mlm_only_train_label")
+        self.workflow.add_jobs(create_csv_mlm_only_train_job)
 
-        pretrain_output_tar = File("pretrain_OCELOT.tgz")
+        create_csv_mlm_only_val_job = Job(transformation="create_csv_mlm_only_val_transformation",
+                                          node_label="create_csv_mlm_only_val_label")
+        self.workflow.add_jobs(create_csv_mlm_only_val_job)
 
-        step1_pretrain_job = Job("step1_pretrain", node_label="step1_pretrain_label")
-        step1_pretrain_job.add_inputs(encoding_input_file, tokenizer_input_file, roberta_params_file)
-        step1_pretrain_job.add_outputs(pretrain_output_tar, stage_out=True)
-        step1_pretrain_job.add_selector_profile(execution_site=NEOCORTEX_SITE_HANDLE)
+        create_csv_mlm_only_test_job = Job(transformation="create_csv_mlm_only_test_transformation",
+                                           node_label="create_csv_mlm_only_test_label")
+        self.workflow.add_jobs(create_csv_mlm_only_test_job)
 
-        self.workflow.add_jobs(step1_pretrain_job)
-        ###
+        run_roberta_job = Job(transformation="run_roberta_transformation", node_label="run_roberta_label")
+        run_roberta_job.add_selector_profile(execution_site=NEOCORTEX_SITE_HANDLE)
+        self.workflow.add_jobs(run_roberta_job)
 
-        ### Step 2: Regression
-        materials_string_regression_tar = File("materials_string_regression.tgz")
+        create_regression_csv_job = Job(transformation="create_regression_csv_transformation",
+                                        node_label="create_regression_csv_label")
+        self.workflow.add_jobs(create_regression_csv_job)
 
-        step2_regression_job = Job("step2_regression", node_label="step2_regression_label")
-        step2_regression_job.add_inputs(regression_params_file)
-        step2_regression_job.add_outputs(materials_string_regression_tar)
-        step2_regression_job.add_selector_profile(execution_site=BRIDGES2_SITE_HANDLE)
+        ## Jobs with dependencies
+        run_regression_job = Job(transformation="run_regression_transformation", node_label="run_regression_label")
+        self.workflow.add_jobs(run_regression_job)
+        self.workflow.add_dependency(job=run_regression_job, parents=[create_regression_csv_job, run_roberta_job])
 
-        self.workflow.add_jobs(step2_regression_job)
-        ###
+        run_inference_job = Job(transformation="run_inference_transformation", node_label="run_inference_label")
+        self.workflow.add_jobs(run_inference_job)
+        self.workflow.add_dependency(job=run_inference_job, parents=[run_regression_job, ])
 
-        ### Step 3: Inference
-        materials_string_inference_file = File("materials_string_inference")
-
-        step3_inference_job = Job("step3_inference", node_label="step3_inference_label")
-        step3_inference_job.add_inputs(materials_string_regression_tar)
-        step3_inference_job.add_outputs(materials_string_inference_file)
-        step3_inference_job.add_selector_profile(execution_site=BRIDGES2_SITE_HANDLE)
-
-        self.workflow.add_jobs(step3_inference_job)
-        ###
+        # ### Step 1: Pre-training
+        # encoding_input_file = File("encoding_input_file")
+        # self.replica_catalog.add_replica(
+        #     site="local", lfn=encoding_input_file.lfn,
+        #     pfn="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_materials_string_OCELOT.txt"
+        # )
+        #
+        #
+        # roberta_params_file = File("roberta_params_OCELOT_MS.yaml")
+        # self.replica_catalog.add_replica(
+        #     site="local", lfn=roberta_params_file.lfn,
+        #     pfn=f"{BASE_DIR}/step1/{DUMMY}roberta_params_OCELOT_MS.yaml"
+        # )
+        #
+        # pretrain_output_tar = File("pretrain_OCELOT.tgz")
+        #
+        # # self.workflow.add_jobs(step3_inference_job)
+        # ###
 
     def __call__(self):
         self.log.info("Creating workflow properties...")
