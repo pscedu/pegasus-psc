@@ -39,6 +39,8 @@ BRIDGES2_SITE_HANDLE = "bridges2"
 
 # from IPython.display import Image; Image(filename='graph.png')
 
+ENTRY_LOCATION = "/ocean/projects/sys890003p/spagaria/project1/dana"
+
 
 class CerebrasPyTorchWorkflow:
 
@@ -293,8 +295,6 @@ class CerebrasPyTorchWorkflow:
         # [Neocortex] run_roberta.py  }
         # create_regression_csv.py    } => run_regression.py => run_inference.py => End
 
-        ENTRY_LOCATION = "/ocean/projects/sys890003p/spagaria/project1/dana"
-
         ### prepare_tokenization_split.py
         #### Files definition
         materials_string_input_file = File("materials_string_input_file")
@@ -303,7 +303,7 @@ class CerebrasPyTorchWorkflow:
             pfn=f"{ENTRY_LOCATION}/encoding/crystal_materials_string_OCELOT.txt"
         )
         pretraining_output_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__pretraining.tgz")
-        model_pretrain_output_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__model_pretrain.tgz")
+        model_pretrain_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__model_pretrain.tgz")
         #### Job definition
         prepare_tokenization_split_job = Job(transformation="prepare_tokenization_split_transformation",
                                              node_label="prepare_tokenization_split_label")
@@ -319,9 +319,9 @@ class CerebrasPyTorchWorkflow:
             site="local", lfn=tokenizer_vobac_input_file.lfn,
             pfn=f"{ENTRY_LOCATION}/tokenizer/materials_string_OCELOT.txt"
         )
-        cvs_train_tar = File("cvs_train.tgz")
-        cvs_val_tar = File("cvs_val.tgz")
-        cvs_test_tar = File("cvs_test.tgz")
+        csv_train_tar = File("csv_train.tgz")
+        csv_val_tar = File("csv_val.tgz")
+        csv_test_tar = File("csv_test.tgz")
 
         roberta_params_yaml_input_file = File("roberta_params_yaml_input_file")
         self.replica_catalog.add_replica(
@@ -335,7 +335,7 @@ class CerebrasPyTorchWorkflow:
         self.workflow.add_jobs(create_csv_mlm_only_train_job)
 
         create_csv_mlm_only_train_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file)
-        create_csv_mlm_only_train_job.add_outputs(cvs_train_tar)
+        create_csv_mlm_only_train_job.add_outputs(csv_train_tar)
 
         #### create_csv_mlm_only.py val
         create_csv_mlm_only_val_job = Job(transformation="create_csv_mlm_only_val_transformation",
@@ -343,7 +343,7 @@ class CerebrasPyTorchWorkflow:
         self.workflow.add_jobs(create_csv_mlm_only_val_job)
 
         create_csv_mlm_only_val_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file)
-        create_csv_mlm_only_val_job.add_outputs(cvs_val_tar)
+        create_csv_mlm_only_val_job.add_outputs(csv_val_tar)
 
         #### create_csv_mlm_only.py test
         create_csv_mlm_only_test_job = Job(transformation="create_csv_mlm_only_test_transformation",
@@ -351,15 +351,15 @@ class CerebrasPyTorchWorkflow:
         self.workflow.add_jobs(create_csv_mlm_only_test_job)
 
         create_csv_mlm_only_test_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file)
-        create_csv_mlm_only_test_job.add_outputs(cvs_test_tar)
+        create_csv_mlm_only_test_job.add_outputs(csv_test_tar)
 
         ### python-pt run_roberta.py
         run_roberta_job = Job(transformation="run_roberta_transformation", node_label="run_roberta_label")
         run_roberta_job.add_selector_profile(execution_site=NEOCORTEX_SITE_HANDLE)
         self.workflow.add_jobs(run_roberta_job)
 
-        run_roberta_job.add_inputs(roberta_params_yaml_input_file)
-        run_roberta_job.add_outputs(model_pretrain_output_tar)
+        run_roberta_job.add_inputs(roberta_params_yaml_input_file, csv_train_tar, csv_val_tar, csv_test_tar)
+        run_roberta_job.add_outputs(model_pretrain_tar)
 
         ### Files
         # TODO: Connect by untarring before accessing the file from model_pretrain_output_tar in .sh file
@@ -369,32 +369,44 @@ class CerebrasPyTorchWorkflow:
             site="local", lfn=regression_params_yaml_input_file.lfn,
             pfn=f"{BASE_DIR}/inputs/regression_params.yaml"
         )
+        # TODO: Compress in .sh file. 85MB total, split across 9579 files. {ENTRY_LOCATION}/Merged_Dataset/OCELOT
+        merged_dataset_ocelot_input_tar_file = File("merged_dataset_ocelot.tgz")
         regression_OCELOT__ms_OCELOT_output_tar = File("regression_OCELOT__ms_OCELOT.tgz")
-        inference_MS_OCELOT_output_file = File("inference_MS_OCELOT.json")
-        # TODO: Connect in .sh file
-        merged_dataset_ocelot_input_dir_path = f"{ENTRY_LOCATION}/Merged_Dataset/OCELOT"
+        inference_MS_OCELOT_json_output_file = File("inference_MS_OCELOT.json")
+        # TODO: Currently using model_pretrain.tgz instead. Is it better to make the change?
+        # checkpoint_3000_input_file = File("checkpoint_3000_input_file")
+        # self.replica_catalog.add_replica(
+        #     site="local", lfn=checkpoint_3000_input_file.lfn,
+        #     pfn=f"{ENTRY_LOCATION}/regression_OCELOT/ms_OCELOT/checkpoint_3000.mdl"
+        # )
+        checkpoint_2100_file = File("checkpoint_2100_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=checkpoint_2100_file.lfn,
+            pfn=f"{ENTRY_LOCATION}/regression_OCELOT/ms_OCELOT/checkpoint_2100.mdl"
+        )
 
         ### create_regression_csv.py
         create_regression_csv_job = Job(transformation="create_regression_csv_transformation",
                                         node_label="create_regression_csv_label")
         self.workflow.add_jobs(create_regression_csv_job)
+        create_regression_csv_job.add_inputs(merged_dataset_ocelot_input_tar_file)
         create_regression_csv_job.add_outputs(regression_OCELOT__ms_OCELOT_output_tar)
 
         ### run_regression.py
         run_regression_job = Job(transformation="run_regression_transformation", node_label="run_regression_label")
         self.workflow.add_jobs(run_regression_job)
 
-        # TODO: is the whole folder needed from the previous step for regression_OCELOT__ms_OCELOT_output_tar? Maybe just a CSV file is needed.
-        run_regression_job.add_inputs(model_pretrain_output_tar, regression_params_yaml_input_file,
-                                                   regression_OCELOT__ms_OCELOT_output_tar)
-        run_regression_job.add_outputs(regression_OCELOT__ms_OCELOT_output_tar)
+        # TODO: is the whole folder needed from the previous step for regression_OCELOT__ms_OCELOT_output_tar? Maybe just a csv file is needed.
+        run_regression_job.add_inputs(model_pretrain_tar, regression_params_yaml_input_file,
+                                      regression_OCELOT__ms_OCELOT_output_tar)
+        run_regression_job.add_outputs(checkpoint_2100_file)
 
         ### run_inference_job.py
         run_inference_job = Job(transformation="run_inference_transformation", node_label="run_inference_label")
         self.workflow.add_jobs(run_inference_job)
 
-        run_inference_job.add_inputs(regression_OCELOT__ms_OCELOT_output_tar)
-        run_inference_job.add_outputs(inference_MS_OCELOT_output_file)
+        run_inference_job.add_inputs(checkpoint_2100_file)
+        run_inference_job.add_outputs(inference_MS_OCELOT_json_output_file)
 
         ## Job Dependencies
         self.workflow.add_dependency(job=prepare_tokenization_split_job,
