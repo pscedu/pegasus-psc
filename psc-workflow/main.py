@@ -37,7 +37,6 @@ USER = getpass.getuser()
 NEOCORTEX_SITE_HANDLE = "neocortex"
 BRIDGES2_SITE_HANDLE = "bridges2"
 
-DUMMY = "dummy/"  # Set to "" when switching to use the real files.
 # from IPython.display import Image; Image(filename='graph.png')
 
 
@@ -139,7 +138,6 @@ class CerebrasPyTorchWorkflow:
                 FileServer("file://" + local_storage_dir, Operation.ALL)
             ),
         )
-        # TODO review line: local.add_pegasus_profile(SSH_PRIVATE_KEY=WF_SSH_KEY_PATH)
         self.site_catalog.add_sites(local)
 
         # the neocortex site
@@ -154,8 +152,6 @@ class CerebrasPyTorchWorkflow:
             ),
         )
         neocortex.add_condor_profile(grid_resource="batch slurm")
-        # TODO, review:
-        #    neocortex.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
         neocortex.add_pegasus_profile(
             style="glite",
             queue="sdf",
@@ -177,8 +173,6 @@ class CerebrasPyTorchWorkflow:
             Grid(grid_type=Grid.BATCH, scheduler_type=Scheduler.SLURM, contact=login_host,
                  job_type=SupportedJobs.COMPUTE)
         )
-        # TODO: Update PEGASUS_HOME path.
-        # bridges2.add_env("PEGASUS_HOME", "/ocean/projects/cis240026p/vahi/software/install/pegasus/default")
         bridges2.add_pegasus_profile(
             style="ssh",
             queue="RM-shared",
@@ -187,9 +181,6 @@ class CerebrasPyTorchWorkflow:
             project=self.project,
         )
         self.site_catalog.add_sites(bridges2)
-
-        # TODO: Is this line needed?
-        # self.workflow.add_site_catalog(sc=self.site_catalog)
 
     # --- Transformation Catalog (Executables and Containers) ----------------------
     def create_transformation_catalog(self):
@@ -206,7 +197,7 @@ class CerebrasPyTorchWorkflow:
         prepare_tokenization_split_transformation = Transformation(
             name="prepare_tokenization_split_transformation",
             site="local",
-            pfn=f"{BASE_DIR}/executables/prepare_tokenization_split.sh",
+            pfn=f"{BASE_DIR}/executables/step1/prepare_tokenization_split.sh",
             is_stageable=True,
         )
         prepare_tokenization_split_transformation.add_pegasus_profiles(cores=1, runtime="300",
@@ -220,7 +211,7 @@ class CerebrasPyTorchWorkflow:
             create_csv_mlm_only_transformation = Transformation(
                 name=f"create_csv_mlm_only_{mode}_transformation",
                 site="local",
-                pfn=f"{BASE_DIR}/executables/create_csv_mlm_only_{mode}.sh",
+                pfn=f"{BASE_DIR}/executables/step1/create_csv_mlm_only_{mode}.sh",
                 is_stageable=True,
             )
             create_csv_mlm_only_transformation.add_pegasus_profiles(cores=1, runtime="300",
@@ -233,7 +224,7 @@ class CerebrasPyTorchWorkflow:
         run_roberta_transformation = Transformation(
             name="run_roberta_transformation",
             site="local",
-            pfn=f"{BASE_DIR}/executables/run_roberta.sh",
+            pfn=f"{BASE_DIR}/executables/step1/run_roberta.sh",
             is_stageable=True,
             container=container,
         )
@@ -282,9 +273,6 @@ class CerebrasPyTorchWorkflow:
                                                           glite_arguments="--cpus-per-task=28")
         self.transformation_catalog.add_transformations(run_inference_transformation)
 
-        # TODO: Is this line needed?
-        # self.workflow.add_transformation_catalog(tc=self.transformation_catalog)
-
     # --- Replica Catalog ----------------------------------------------------------
     def create_replica_catalog(self):
         pass
@@ -305,58 +293,116 @@ class CerebrasPyTorchWorkflow:
         # [Neocortex] run_roberta.py  }
         # create_regression_csv.py    } => run_regression.py => run_inference.py => End
 
-        ## Parallel Steps
+        ENTRY_LOCATION = "/ocean/projects/sys890003p/spagaria/project1/dana"
+
+        ### prepare_tokenization_split.py
+        #### Files definition
+        materials_string_input_file = File("materials_string_input_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=materials_string_input_file.lfn,
+            pfn=f"{ENTRY_LOCATION}/encoding/crystal_materials_string_OCELOT.txt"
+        )
+        pretraining_output_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__pretraining.tgz")
+        model_pretrain_output_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__model_pretrain.tgz")
+        #### Job definition
         prepare_tokenization_split_job = Job(transformation="prepare_tokenization_split_transformation",
                                              node_label="prepare_tokenization_split_label")
         self.workflow.add_jobs(prepare_tokenization_split_job)
 
+        prepare_tokenization_split_job.add_inputs(input_files=[materials_string_input_file, ])
+        prepare_tokenization_split_job.add_outputs(output_files=[pretraining_output_tar, ])
+
+        ### create_csv_mlm_only.py
+        #### Files definition
+        tokenizer_vobac_input_file = File("tokenizer_vobac_input_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=tokenizer_vobac_input_file.lfn,
+            pfn=f"{ENTRY_LOCATION}/tokenizer/materials_string_OCELOT.txt"
+        )
+        cvs_train_tar = File("cvs_train.tgz")
+        cvs_val_tar = File("cvs_val.tgz")
+        cvs_test_tar = File("cvs_test.tgz")
+
+        roberta_params_yaml_input_file = File("roberta_params_yaml_input_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=roberta_params_yaml_input_file.lfn,
+            pfn=f"{BASE_DIR}/inputs/roberta_params_OCELOT_MS.yaml"
+        )
+
+        #### create_csv_mlm_only.py train
         create_csv_mlm_only_train_job = Job(transformation="create_csv_mlm_only_train_transformation",
                                             node_label="create_csv_mlm_only_train_label")
         self.workflow.add_jobs(create_csv_mlm_only_train_job)
 
+        create_csv_mlm_only_train_job.add_inputs(input_files=[pretraining_output_tar, tokenizer_vobac_input_file])
+        create_csv_mlm_only_train_job.add_outputs(output_files=[cvs_train_tar, ])
+
+        #### create_csv_mlm_only.py val
         create_csv_mlm_only_val_job = Job(transformation="create_csv_mlm_only_val_transformation",
                                           node_label="create_csv_mlm_only_val_label")
         self.workflow.add_jobs(create_csv_mlm_only_val_job)
 
+        create_csv_mlm_only_val_job.add_inputs(input_files=[pretraining_output_tar, tokenizer_vobac_input_file])
+        create_csv_mlm_only_val_job.add_outputs(output_files=[cvs_val_tar, ])
+
+        #### create_csv_mlm_only.py test
         create_csv_mlm_only_test_job = Job(transformation="create_csv_mlm_only_test_transformation",
                                            node_label="create_csv_mlm_only_test_label")
         self.workflow.add_jobs(create_csv_mlm_only_test_job)
 
+        create_csv_mlm_only_test_job.add_inputs(input_files=[pretraining_output_tar, tokenizer_vobac_input_file])
+        create_csv_mlm_only_test_job.add_outputs(output_files=[cvs_test_tar, ])
+
+        ### python-pt run_roberta.py
         run_roberta_job = Job(transformation="run_roberta_transformation", node_label="run_roberta_label")
         run_roberta_job.add_selector_profile(execution_site=NEOCORTEX_SITE_HANDLE)
         self.workflow.add_jobs(run_roberta_job)
 
+        run_roberta_job.add_inputs(input_files=[roberta_params_yaml_input_file, ])
+        run_roberta_job.add_outputs(output_files=[model_pretrain_output_tar, ])
+
+        ### Files
+        # TODO: Connect by untarring before accessing the file from model_pretrain_output_tar in .sh file
+        # f"{ENTRY_LOCATION}/pretrain_OCELOT/pretrain_MS_0.0001/model_pretrain/checkpoint_3000.mdl"
+        regression_params_yaml_input_file = File("regression_params_yaml_input_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=regression_params_yaml_input_file.lfn,
+            pfn=f"{BASE_DIR}/inputs/regression_params.yaml"
+        )
+        regression_OCELOT__ms_OCELOT_output_tar = File("regression_OCELOT__ms_OCELOT.tgz")
+        inference_MS_OCELOT_output_file = File("inference_MS_OCELOT.json")
+        # TODO: Connect in .sh file
+        merged_dataset_ocelot_input_dir_path = f"{ENTRY_LOCATION}/Merged_Dataset/OCELOT"
+
+        ### create_regression_csv.py
         create_regression_csv_job = Job(transformation="create_regression_csv_transformation",
                                         node_label="create_regression_csv_label")
         self.workflow.add_jobs(create_regression_csv_job)
+        create_regression_csv_job.add_outputs(output_files=[regression_OCELOT__ms_OCELOT_output_tar])
 
-        ## Jobs with dependencies
+        ### run_regression.py
         run_regression_job = Job(transformation="run_regression_transformation", node_label="run_regression_label")
         self.workflow.add_jobs(run_regression_job)
-        self.workflow.add_dependency(job=run_regression_job, parents=[create_regression_csv_job, run_roberta_job])
 
+        # TODO: is the whole folder needed from the previous step for regression_OCELOT__ms_OCELOT_output_tar? Maybe just a CSV file is needed.
+        run_regression_job.add_inputs(input_files=[model_pretrain_output_tar, regression_params_yaml_input_file,
+                                                   regression_OCELOT__ms_OCELOT_output_tar])
+        run_regression_job.add_outputs(output_files=[regression_OCELOT__ms_OCELOT_output_tar, ])
+
+        ### run_inference_job.py
         run_inference_job = Job(transformation="run_inference_transformation", node_label="run_inference_label")
         self.workflow.add_jobs(run_inference_job)
-        self.workflow.add_dependency(job=run_inference_job, parents=[run_regression_job, ])
 
-        # ### Step 1: Pre-training
-        # encoding_input_file = File("encoding_input_file")
-        # self.replica_catalog.add_replica(
-        #     site="local", lfn=encoding_input_file.lfn,
-        #     pfn="/ocean/projects/sys890003p/spagaria/project1/dana/encoding/crystal_materials_string_OCELOT.txt"
-        # )
-        #
-        #
-        # roberta_params_file = File("roberta_params_OCELOT_MS.yaml")
-        # self.replica_catalog.add_replica(
-        #     site="local", lfn=roberta_params_file.lfn,
-        #     pfn=f"{BASE_DIR}/step1/{DUMMY}roberta_params_OCELOT_MS.yaml"
-        # )
-        #
-        # pretrain_output_tar = File("pretrain_OCELOT.tgz")
-        #
-        # # self.workflow.add_jobs(step3_inference_job)
-        # ###
+        run_inference_job.add_inputs(input_files=[regression_OCELOT__ms_OCELOT_output_tar, ])
+        run_inference_job.add_outputs(output_files=[inference_MS_OCELOT_output_file, ])
+
+        ## Job Dependencies
+        self.workflow.add_dependency(job=prepare_tokenization_split_job,
+                                     children=[create_csv_mlm_only_train_job,
+                                               create_csv_mlm_only_val_job,
+                                               create_csv_mlm_only_test_job, ])
+        self.workflow.add_dependency(job=run_regression_job, parents=[create_regression_csv_job, run_roberta_job])
+        self.workflow.add_dependency(job=run_inference_job, parents=[run_regression_job, ])
 
     def __call__(self):
         self.log.info("Creating workflow properties...")
