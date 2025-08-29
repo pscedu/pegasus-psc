@@ -116,6 +116,6 @@ values["metrics"] = {
 }
 # ====== Shreya ================
 
-with open('{}.json'.format(args.outfile), 'w') as f:
+with open('{}'.format(args.outfile), 'w') as f:
     json.dump(values, f, indent=2)
 f.close()

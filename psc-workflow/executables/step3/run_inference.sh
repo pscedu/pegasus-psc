@@ -11,7 +11,12 @@ module load anaconda3/2022.10
 #put the path to your conda environment here
 conda activate /ocean/projects/sys890003p/spagaria/project1/envs
 
-python run_inference.py --checkpoint_path /ocean/projects/sys890003p/spagaria/project1/dana/regression_OCELOT/ms_OCELOT/checkpoint_2100.mdl --outfile inference_MS_OCELOT
+# TODO: Run after the "run_regression.py" substep has finished.
+python run_inference.py
+  INPUT
+    --checkpoint_path /ocean/projects/sys890003p/spagaria/project1/dana/regression_OCELOT/ms_OCELOT/checkpoint_2100.mdl
+  OUTPUT
+    --outfile inference_MS_OCELOT.json
 
 
 #the checkpoint path is the path to the best checkpoint of your trained regression model
