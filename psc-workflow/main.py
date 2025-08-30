@@ -233,7 +233,7 @@ class CerebrasPyTorchWorkflow:
         run_roberta_transformation.add_pegasus_profiles(cores=1, runtime="300",
                                                         container_launcher="srun",
                                                         container_launcher_arguments="--kill-on-bad-exit",
-                                                        glite_arguments="--cpus-per-task=28")
+                                                        glite_arguments="--cpus-per-task=28")  # --gres=cs:cerebras:1
         self.transformation_catalog.add_transformations(run_roberta_transformation)
 
         # create_regression_csv.py
@@ -243,7 +243,7 @@ class CerebrasPyTorchWorkflow:
             pfn=f"{BASE_DIR}/executables/create_regression_csv.sh",
             is_stageable=True,
         )
-        create_regression_csv_transformation.add_pegasus_profiles(cores=1, runtime="300",
+        create_regression_csv_transformation.add_pegasus_profiles(cores=1, runtime=str(60 * 60 * 5),
                                                                   container_launcher="srun",
                                                                   container_launcher_arguments="--kill-on-bad-exit",
                                                                   glite_arguments="--cpus-per-task=28")
@@ -257,6 +257,7 @@ class CerebrasPyTorchWorkflow:
             is_stageable=True,
         )
         run_regression_transformation.add_pegasus_profiles(cores=1, runtime="300",
+                                                           queue="GPU-shared", gpus=1,
                                                            container_launcher="srun",
                                                            container_launcher_arguments="--kill-on-bad-exit",
                                                            glite_arguments="--cpus-per-task=28")
@@ -270,6 +271,7 @@ class CerebrasPyTorchWorkflow:
             is_stageable=True,
         )
         run_inference_transformation.add_pegasus_profiles(cores=1, runtime="300",
+                                                          queue="GPU-shared", gpus=1,
                                                           container_launcher="srun",
                                                           container_launcher_arguments="--kill-on-bad-exit",
                                                           glite_arguments="--cpus-per-task=28")
