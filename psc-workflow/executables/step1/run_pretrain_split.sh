@@ -70,8 +70,9 @@ python3 create_csv_mlm_only.py
 python-pt run_roberta.py
   ARGUMENT
     --mode train
+    --cs_ip ${CS_IP_ADDR}
   INPUT
-    --params ${ENTRY_LOCATION}/roberta_params_OCELOT_MS.yaml --cs_ip ${CS_IP_ADDR}
+    --params ${ENTRY_LOCATION}/roberta_params_OCELOT_MS.yaml
   OUTPUT
     --model_dir ${ENTRY_LOCATION}/pretrain_OCELOT/pretrain_MS_0.0001/model_pretrain
 
