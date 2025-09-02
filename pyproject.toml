@@ -1,0 +1,14 @@
+[project]
+name = "neocortex-pegasus"
+version = "0.1.0"
+description = "Pegasus WMS env for the Neocortex System at PSC"
+requires-python = ">=3.11"
+dependencies = [
+    "gitpython>=3.1.45",
+    "gradio==4.44",
+    "jupyter>=1.1.1",
+    "pegasus-wms-api>=5.1.1",
+    "pymatgen==2024.2.20",
+    "slices>=2.0.10",
+    "tqdm>=4.67.1",
+]
