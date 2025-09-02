@@ -1,0 +1,13 @@
+# Intro Notes
+
+## Reference Repository
+
+`https://github.com/pscedu/danaoconnor/tree/main/ShreyaSummerProject`
+
+## For Pegasus Workflow
+Across all the directories to be consistent I have used the example of OCELOT dataset with materials_string as the text representation
+
+## Requirements
+    * Encoding folder
+    * Tokenizer folder
+    * Run pre-regression script for preprocessing the downstream data.
