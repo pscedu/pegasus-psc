@@ -328,7 +328,7 @@ class CerebrasPyTorchWorkflow:
         roberta_params_yaml_input_file = File("roberta_params_yaml_input_file")
         self.replica_catalog.add_replica(
             site="local", lfn=roberta_params_yaml_input_file.lfn,
-            pfn=f"{BASE_DIR}/inputs/roberta_params_OCELOT_MS.yaml"
+            pfn=f"{BASE_DIR}/inputs/step1/roberta_params_OCELOT_MS.yaml"
         )
 
         #### create_csv_mlm_only.py train
@@ -369,13 +369,13 @@ class CerebrasPyTorchWorkflow:
         regression_params_yaml_input_file = File("regression_params_yaml_input_file")
         self.replica_catalog.add_replica(
             site="local", lfn=regression_params_yaml_input_file.lfn,
-            pfn=f"{BASE_DIR}/inputs/regression_params.yaml"
+            pfn=f"{BASE_DIR}/inputs/step2/regression_params.yaml"
         )
         # TODO: Compress in .sh file. 85MB total, split across 9579 files. {ENTRY_LOCATION}/Merged_Dataset/OCELOT
         merged_dataset_ocelot_input_tar_file = File("merged_dataset_ocelot.tgz")
         self.replica_catalog.add_replica(
             site="local", lfn=merged_dataset_ocelot_input_tar_file.lfn,
-            pfn=f"{BASE_DIR}/inputs/merged_dataset_ocelot.tgz"
+            pfn=f"{BASE_DIR}/inputs/step2/merged_dataset_ocelot.tgz"
         )
         regression_OCELOT__ms_OCELOT_output_tar = File("regression_OCELOT__ms_OCELOT.tgz")
         inference_MS_OCELOT_json_output_file = File("inference_MS_OCELOT.json")
