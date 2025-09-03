@@ -240,7 +240,7 @@ class CerebrasPyTorchWorkflow:
         create_regression_csv_transformation = Transformation(
             name="create_regression_csv_transformation",
             site="local",
-            pfn=f"{BASE_DIR}/executables/create_regression_csv.sh",
+            pfn=f"{BASE_DIR}/executables/step2/create_regression_csv.sh",
             is_stageable=True,
         )
         create_regression_csv_transformation.add_pegasus_profiles(cores=1, runtime=str(60 * 60 * 5),
@@ -253,7 +253,7 @@ class CerebrasPyTorchWorkflow:
         run_regression_transformation = Transformation(
             name="run_regression_transformation",
             site="local",
-            pfn=f"{BASE_DIR}/executables/run_regression.sh",
+            pfn=f"{BASE_DIR}/executables/step2/run_regression.sh",
             is_stageable=True,
         )
         run_regression_transformation.add_pegasus_profiles(cores=1, runtime="300",
@@ -267,7 +267,7 @@ class CerebrasPyTorchWorkflow:
         run_inference_transformation = Transformation(
             name="run_inference_transformation",
             site="local",
-            pfn=f"{BASE_DIR}/executables/run_inference.sh",
+            pfn=f"{BASE_DIR}/executables/step3/run_inference.sh",
             is_stageable=True,
         )
         run_inference_transformation.add_pegasus_profiles(cores=1, runtime="300",
