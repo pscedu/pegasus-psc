@@ -299,6 +299,37 @@ class CerebrasPyTorchWorkflow:
 
         ### prepare_tokenization_split.py
         #### Files definition
+        create_csv_mlm_only_py_file = File("create_csv_mlm_only_py_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=create_csv_mlm_only_py_file.lfn,
+            pfn=f"{BASE_DIR}/executables/step1/create_csv_mlm_only.py"
+        )
+        prepare_tokenization_split_py_file = File("prepare_tokenization_split_py_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=prepare_tokenization_split_py_file.lfn,
+            pfn=f"{BASE_DIR}/executables/step1/prepare_tokenization_split.py"
+        )
+        run_roberta_py_file = File("run_roberta_py_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=run_roberta_py_file.lfn,
+            pfn=f"{BASE_DIR}/executables/step1/run_roberta.py"
+        )
+        create_regression_csv_py_file = File("create_regression_csv_py_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=create_regression_csv_py_file.lfn,
+            pfn=f"{BASE_DIR}/executables/step2/create_regression_csv.py"
+        )
+        run_regression_py_file = File("run_regression_py_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=run_regression_py_file.lfn,
+            pfn=f"{BASE_DIR}/executables/step2/run_regression.py"
+        )
+        run_inference_py_file = File("run_inference_py_file")
+        self.replica_catalog.add_replica(
+            site="local", lfn=run_inference_py_file.lfn,
+            pfn=f"{BASE_DIR}/executables/step3/run_inference.py"
+        )
+
         materials_string_input_file = File("materials_string_input_file")
         self.replica_catalog.add_replica(
             site="local", lfn=materials_string_input_file.lfn,
@@ -311,7 +342,8 @@ class CerebrasPyTorchWorkflow:
                                              node_label="prepare_tokenization_split_label")
         self.workflow.add_jobs(prepare_tokenization_split_job)
 
-        prepare_tokenization_split_job.add_inputs(materials_string_input_file)
+        prepare_tokenization_split_job.add_inputs(materials_string_input_file,
+                                                  prepare_tokenization_split_py_file)
         prepare_tokenization_split_job.add_outputs(pretraining_output_tar)
 
         ### create_csv_mlm_only.py
@@ -336,7 +368,8 @@ class CerebrasPyTorchWorkflow:
                                             node_label="create_csv_mlm_only_train_label")
         self.workflow.add_jobs(create_csv_mlm_only_train_job)
 
-        create_csv_mlm_only_train_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file)
+        create_csv_mlm_only_train_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file,
+                                                 create_csv_mlm_only_py_file)
         create_csv_mlm_only_train_job.add_outputs(csv_train_tar)
 
         #### create_csv_mlm_only.py val
@@ -344,7 +377,8 @@ class CerebrasPyTorchWorkflow:
                                           node_label="create_csv_mlm_only_val_label")
         self.workflow.add_jobs(create_csv_mlm_only_val_job)
 
-        create_csv_mlm_only_val_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file)
+        create_csv_mlm_only_val_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file,
+                                               create_csv_mlm_only_py_file)
         create_csv_mlm_only_val_job.add_outputs(csv_val_tar)
 
         #### create_csv_mlm_only.py test
@@ -352,7 +386,8 @@ class CerebrasPyTorchWorkflow:
                                            node_label="create_csv_mlm_only_test_label")
         self.workflow.add_jobs(create_csv_mlm_only_test_job)
 
-        create_csv_mlm_only_test_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file)
+        create_csv_mlm_only_test_job.add_inputs(pretraining_output_tar, tokenizer_vobac_input_file,
+                                                create_csv_mlm_only_py_file)
         create_csv_mlm_only_test_job.add_outputs(csv_test_tar)
 
         ### python-pt run_roberta.py
@@ -360,7 +395,8 @@ class CerebrasPyTorchWorkflow:
         run_roberta_job.add_selector_profile(execution_site=NEOCORTEX_SITE_HANDLE)
         self.workflow.add_jobs(run_roberta_job)
 
-        run_roberta_job.add_inputs(roberta_params_yaml_input_file, csv_train_tar, csv_val_tar, csv_test_tar)
+        run_roberta_job.add_inputs(roberta_params_yaml_input_file, run_roberta_py_file,
+                                   csv_train_tar, csv_val_tar, csv_test_tar)
         run_roberta_job.add_outputs(model_pretrain_tar)
 
         ### Files
@@ -395,7 +431,7 @@ class CerebrasPyTorchWorkflow:
         create_regression_csv_job = Job(transformation="create_regression_csv_transformation",
                                         node_label="create_regression_csv_label")
         self.workflow.add_jobs(create_regression_csv_job)
-        create_regression_csv_job.add_inputs(merged_dataset_ocelot_input_tar_file)
+        create_regression_csv_job.add_inputs(merged_dataset_ocelot_input_tar_file, create_regression_csv_py_file)
         create_regression_csv_job.add_outputs(regression_OCELOT__ms_OCELOT_output_tar)
 
         ### run_regression.py
@@ -404,14 +440,15 @@ class CerebrasPyTorchWorkflow:
 
         # TODO: is the whole folder needed from the previous step for regression_OCELOT__ms_OCELOT_output_tar? Maybe just a csv file is needed.
         run_regression_job.add_inputs(model_pretrain_tar, regression_params_yaml_input_file,
-                                      regression_OCELOT__ms_OCELOT_output_tar)
+                                      regression_OCELOT__ms_OCELOT_output_tar,
+                                      run_regression_py_file)
         run_regression_job.add_outputs(checkpoint_2100_file)
 
         ### run_inference_job.py
         run_inference_job = Job(transformation="run_inference_transformation", node_label="run_inference_label")
         self.workflow.add_jobs(run_inference_job)
 
-        run_inference_job.add_inputs(checkpoint_2100_file)
+        run_inference_job.add_inputs(checkpoint_2100_file, run_inference_py_file)
         run_inference_job.add_outputs(inference_MS_OCELOT_json_output_file)
 
         ## Job Dependencies
