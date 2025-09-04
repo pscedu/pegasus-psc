@@ -197,7 +197,7 @@ class CerebrasPyTorchWorkflow:
 
         # prepare_tokenization_split
         prepare_tokenization_split_transformation = Transformation(
-            name="prepare_tokenization_split_transformation",
+            name="prepare_tokenization_split.sh",
             site="local",
             pfn=f"{BASE_DIR}/executables/step1/prepare_tokenization_split.sh",
             is_stageable=True,
@@ -211,7 +211,7 @@ class CerebrasPyTorchWorkflow:
         # create_csv_mlm_only.py train, val, test
         for mode in "train", "val", "test":
             create_csv_mlm_only_transformation = Transformation(
-                name=f"create_csv_mlm_only_{mode}_transformation",
+                name=f"create_csv_mlm_only_{mode}.sh",
                 site="local",
                 pfn=f"{BASE_DIR}/executables/step1/create_csv_mlm_only_{mode}.sh",
                 is_stageable=True,
@@ -224,7 +224,7 @@ class CerebrasPyTorchWorkflow:
 
         # [Neocortex] run_roberta.py
         run_roberta_transformation = Transformation(
-            name="run_roberta_transformation",
+            name="run_roberta.sh",
             site="local",
             pfn=f"{BASE_DIR}/executables/step1/run_roberta.sh",
             is_stageable=True,
@@ -238,7 +238,7 @@ class CerebrasPyTorchWorkflow:
 
         # create_regression_csv.py
         create_regression_csv_transformation = Transformation(
-            name="create_regression_csv_transformation",
+            name="create_regression_csv.sh",
             site="local",
             pfn=f"{BASE_DIR}/executables/step2/create_regression_csv.sh",
             is_stageable=True,
@@ -251,7 +251,7 @@ class CerebrasPyTorchWorkflow:
 
         # run_regression.py
         run_regression_transformation = Transformation(
-            name="run_regression_transformation",
+            name="run_regression.sh",
             site="local",
             pfn=f"{BASE_DIR}/executables/step2/run_regression.sh",
             is_stageable=True,
@@ -265,7 +265,7 @@ class CerebrasPyTorchWorkflow:
 
         # run_inference.py
         run_inference_transformation = Transformation(
-            name="run_inference_transformation",
+            name="run_inference.sh",
             site="local",
             pfn=f"{BASE_DIR}/executables/step3/run_inference.sh",
             is_stageable=True,
@@ -299,32 +299,32 @@ class CerebrasPyTorchWorkflow:
 
         ### prepare_tokenization_split.py
         #### Files definition
-        create_csv_mlm_only_py_file = File("create_csv_mlm_only_py_file")
+        create_csv_mlm_only_py_file = File("create_csv_mlm_only.py")
         self.replica_catalog.add_replica(
             site="local", lfn=create_csv_mlm_only_py_file.lfn,
             pfn=f"{BASE_DIR}/executables/step1/create_csv_mlm_only.py"
         )
-        prepare_tokenization_split_py_file = File("prepare_tokenization_split_py_file")
+        prepare_tokenization_split_py_file = File("prepare_tokenization_split.py")
         self.replica_catalog.add_replica(
             site="local", lfn=prepare_tokenization_split_py_file.lfn,
             pfn=f"{BASE_DIR}/executables/step1/prepare_tokenization_split.py"
         )
-        run_roberta_py_file = File("run_roberta_py_file")
+        run_roberta_py_file = File("run_roberta.py")
         self.replica_catalog.add_replica(
             site="local", lfn=run_roberta_py_file.lfn,
             pfn=f"{BASE_DIR}/executables/step1/run_roberta.py"
         )
-        create_regression_csv_py_file = File("create_regression_csv_py_file")
+        create_regression_csv_py_file = File("create_regression_csv.py")
         self.replica_catalog.add_replica(
             site="local", lfn=create_regression_csv_py_file.lfn,
             pfn=f"{BASE_DIR}/executables/step2/create_regression_csv.py"
         )
-        run_regression_py_file = File("run_regression_py_file")
+        run_regression_py_file = File("run_regression.py")
         self.replica_catalog.add_replica(
             site="local", lfn=run_regression_py_file.lfn,
             pfn=f"{BASE_DIR}/executables/step2/run_regression.py"
         )
-        run_inference_py_file = File("run_inference_py_file")
+        run_inference_py_file = File("run_inference.py")
         self.replica_catalog.add_replica(
             site="local", lfn=run_inference_py_file.lfn,
             pfn=f"{BASE_DIR}/executables/step3/run_inference.py"
