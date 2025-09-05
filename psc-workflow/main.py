@@ -338,7 +338,7 @@ class CerebrasPyTorchWorkflow:
         pretraining_output_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__pretraining.tgz")
         model_pretrain_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__model_pretrain.tgz")
         #### Job definition
-        prepare_tokenization_split_job = Job(transformation="prepare_tokenization_split_transformation",
+        prepare_tokenization_split_job = Job(transformation="prepare_tokenization_split.sh",
                                              node_label="prepare_tokenization_split_label")
         self.workflow.add_jobs(prepare_tokenization_split_job)
 
@@ -364,7 +364,7 @@ class CerebrasPyTorchWorkflow:
         )
 
         #### create_csv_mlm_only.py train
-        create_csv_mlm_only_train_job = Job(transformation="create_csv_mlm_only_train_transformation",
+        create_csv_mlm_only_train_job = Job(transformation="create_csv_mlm_only_train.sh",
                                             node_label="create_csv_mlm_only_train_label")
         self.workflow.add_jobs(create_csv_mlm_only_train_job)
 
@@ -373,7 +373,7 @@ class CerebrasPyTorchWorkflow:
         create_csv_mlm_only_train_job.add_outputs(csv_train_tar)
 
         #### create_csv_mlm_only.py val
-        create_csv_mlm_only_val_job = Job(transformation="create_csv_mlm_only_val_transformation",
+        create_csv_mlm_only_val_job = Job(transformation="create_csv_mlm_only_val.sh",
                                           node_label="create_csv_mlm_only_val_label")
         self.workflow.add_jobs(create_csv_mlm_only_val_job)
 
@@ -382,7 +382,7 @@ class CerebrasPyTorchWorkflow:
         create_csv_mlm_only_val_job.add_outputs(csv_val_tar)
 
         #### create_csv_mlm_only.py test
-        create_csv_mlm_only_test_job = Job(transformation="create_csv_mlm_only_test_transformation",
+        create_csv_mlm_only_test_job = Job(transformation="create_csv_mlm_only_test.sh",
                                            node_label="create_csv_mlm_only_test_label")
         self.workflow.add_jobs(create_csv_mlm_only_test_job)
 
@@ -391,7 +391,7 @@ class CerebrasPyTorchWorkflow:
         create_csv_mlm_only_test_job.add_outputs(csv_test_tar)
 
         ### python-pt run_roberta.py
-        run_roberta_job = Job(transformation="run_roberta_transformation", node_label="run_roberta_label")
+        run_roberta_job = Job(transformation="run_roberta.sh", node_label="run_roberta_label")
         run_roberta_job.add_selector_profile(execution_site=NEOCORTEX_SITE_HANDLE)
         self.workflow.add_jobs(run_roberta_job)
 
@@ -428,14 +428,14 @@ class CerebrasPyTorchWorkflow:
         )
 
         ### create_regression_csv.py
-        create_regression_csv_job = Job(transformation="create_regression_csv_transformation",
+        create_regression_csv_job = Job(transformation="create_regression_csv.sh",
                                         node_label="create_regression_csv_label")
         self.workflow.add_jobs(create_regression_csv_job)
         create_regression_csv_job.add_inputs(merged_dataset_ocelot_input_tar_file, create_regression_csv_py_file)
         create_regression_csv_job.add_outputs(regression_OCELOT__ms_OCELOT_output_tar)
 
         ### run_regression.py
-        run_regression_job = Job(transformation="run_regression_transformation", node_label="run_regression_label")
+        run_regression_job = Job(transformation="run_regression.sh", node_label="run_regression_label")
         self.workflow.add_jobs(run_regression_job)
 
         # TODO: is the whole folder needed from the previous step for regression_OCELOT__ms_OCELOT_output_tar? Maybe just a csv file is needed.
@@ -445,7 +445,7 @@ class CerebrasPyTorchWorkflow:
         run_regression_job.add_outputs(checkpoint_2100_file)
 
         ### run_inference_job.py
-        run_inference_job = Job(transformation="run_inference_transformation", node_label="run_inference_label")
+        run_inference_job = Job(transformation="run_inference.sh", node_label="run_inference_label")
         self.workflow.add_jobs(run_inference_job)
 
         run_inference_job.add_inputs(checkpoint_2100_file, run_inference_py_file)
