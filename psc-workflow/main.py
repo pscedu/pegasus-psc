@@ -230,10 +230,10 @@ class CerebrasPyTorchWorkflow:
             is_stageable=True,
             container=container,
         )
-        run_roberta_transformation.add_pegasus_profiles(cores=1, runtime="300",
+        run_roberta_transformation.add_pegasus_profiles(cores=1, runtime="3600",
                                                         container_launcher="srun",
-                                                        container_launcher_arguments="--kill-on-bad-exit",
-                                                        glite_arguments="--cpus-per-task=28")  # --gres=cs:cerebras:1
+                                                        container_launcher_arguments="--kill-on-bad-exit --bind /ocean",
+                                                        glite_arguments="--cpus-per-task=28 --gres=cs:cerebras:1")
         self.transformation_catalog.add_transformations(run_roberta_transformation)
 
         # create_regression_csv.py
@@ -256,7 +256,7 @@ class CerebrasPyTorchWorkflow:
             pfn=f"{BASE_DIR}/executables/step2/run_regression.sh",
             is_stageable=True,
         )
-        run_regression_transformation.add_pegasus_profiles(cores=1, runtime="300",
+        run_regression_transformation.add_pegasus_profiles(cores=1, runtime="3600",
                                                            queue="GPU-shared", gpus=1,
                                                            container_launcher="srun",
                                                            container_launcher_arguments="--kill-on-bad-exit",
