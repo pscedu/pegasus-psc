@@ -233,7 +233,7 @@ class CerebrasPyTorchWorkflow:
         run_roberta_transformation.add_pegasus_profiles(cores=1, runtime="3600",
                                                         container_launcher="srun",
                                                         container_launcher_arguments="--kill-on-bad-exit --bind /ocean",
-                                                        glite_arguments="--cpus-per-task=28 --gres=cs:cerebras:1")
+                                                        glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1")
         self.transformation_catalog.add_transformations(run_roberta_transformation)
 
         # create_regression_csv.py
