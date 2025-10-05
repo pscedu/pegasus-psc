@@ -131,7 +131,7 @@ class CerebrasPyTorchWorkflow:
     def create_sites_catalog(self):
         # add a local site with an optional job env file to use for compute jobs
         shared_scratch_dir = "/{}/workflows/LOCAL/scratch".format("${PROJECT}")
-        local_storage_dir = "{}/storage".format("${LOCAL}")
+        local_storage_dir = "{}/storage".format(BASE_DIR)
         local = Site("local").add_directories(
             Directory(Directory.SHARED_SCRATCH, shared_scratch_dir).add_file_servers(
                 FileServer("file://" + shared_scratch_dir, Operation.ALL)
