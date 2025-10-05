@@ -131,7 +131,7 @@ class CerebrasPyTorchWorkflow:
     def create_sites_catalog(self):
         # add a local site with an optional job env file to use for compute jobs
         shared_scratch_dir = "/{}/workflows/LOCAL/scratch".format("${PROJECT}")
-        local_storage_dir = "{}/storage".format(BASE_DIR)
+        local_storage_dir = "{}/storage".format("${LOCAL}")
         local = Site("local").add_directories(
             Directory(Directory.SHARED_SCRATCH, shared_scratch_dir).add_file_servers(
                 FileServer("file://" + shared_scratch_dir, Operation.ALL)
@@ -232,8 +232,9 @@ class CerebrasPyTorchWorkflow:
         )
         run_roberta_transformation.add_pegasus_profiles(cores=1, runtime="3600",
                                                         container_launcher="srun",
-                                                        container_launcher_arguments="--kill-on-bad-exit --bind /ocean",
-                                                        glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1")
+                                                        container_launcher_arguments="--kill-on-bad-exit",
+                                                        glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1",
+                                                        container_arguments="--bind /ocean")
         self.transformation_catalog.add_transformations(run_roberta_transformation)
 
         # create_regression_csv.py
