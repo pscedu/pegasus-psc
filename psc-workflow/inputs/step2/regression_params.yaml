@@ -55,7 +55,7 @@ optimizer:
 
 runconfig:
     # max_steps: 15000  #~25 epochs for the training set # ~3 epochs, 67k samples in an epoch
-    max_steps: 5000
+    max_steps: 3000
     log_steps: 1
     save_summary_steps: 5000
     checkpoint_steps: 100
