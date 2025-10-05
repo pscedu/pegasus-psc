@@ -230,7 +230,7 @@ class CerebrasPyTorchWorkflow:
             is_stageable=True,
             container=container,
         )
-        run_roberta_transformation.add_pegasus_profiles(cores=1, runtime="3600",
+        run_roberta_transformation.add_pegasus_profiles(cores=1, runtime="10800",
                                                         container_launcher="srun",
                                                         container_launcher_arguments="--kill-on-bad-exit",
                                                         glite_arguments="--cpus-per-task=14 --gres=cs:cerebras:1",
@@ -334,7 +334,7 @@ class CerebrasPyTorchWorkflow:
         materials_string_input_file = File("materials_string_input_file")
         self.replica_catalog.add_replica(
             site="local", lfn=materials_string_input_file.lfn,
-            pfn=f"{ENTRY_LOCATION}/encoding/crystal_materials_string_OCELOT.txt"
+            pfn=f"{ENTRY_LOCATION}/encoding/OCELOT_prev/crystal_materials_string_OCELOT.txt"
         )
         pretraining_output_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__pretraining.tgz")
         model_pretrain_tar = File("pretrain_OCELOT__pretrain_MS_0_0001__model_pretrain.tgz")
