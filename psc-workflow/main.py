@@ -436,6 +436,7 @@ class CerebrasPyTorchWorkflow:
 
         ### run_regression.py
         run_regression_job = Job(transformation="run_regression.sh", node_label="run_regression_label")
+        run_regression_job.add_selector_profile(execution_site=BRIDGES2_SITE_HANDLE)
         self.workflow.add_jobs(run_regression_job)
 
         # TODO: is the whole folder needed from the previous step for regression_OCELOT__ms_OCELOT_output_tar? Maybe just a csv file is needed.
@@ -446,6 +447,7 @@ class CerebrasPyTorchWorkflow:
 
         ### run_inference_job.py
         run_inference_job = Job(transformation="run_inference.sh", node_label="run_inference_label")
+        run_inference_job.add_selector_profile(execution_site=BRIDGES2_SITE_HANDLE)
         self.workflow.add_jobs(run_inference_job)
 
         run_inference_job.add_inputs(checkpoint_2100_file, run_inference_py_file)
