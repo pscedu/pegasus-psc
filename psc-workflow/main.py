@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-##!/usr/bin/python3
 
 """
 Sample Pegasus workflow for training a model on the Cerebras resource
