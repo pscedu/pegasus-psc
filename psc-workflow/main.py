@@ -257,11 +257,11 @@ class CerebrasPyTorchWorkflow:
             pfn=f"{BASE_DIR}/executables/step2/run_regression.sh",
             is_stageable=True,
         )
-        run_regression_transformation.add_pegasus_profiles(cores=1, runtime="3600",
+        run_regression_transformation.add_pegasus_profiles(cores=5, runtime="3600",
                                                            queue="GPU-shared", gpus=1,
                                                            container_launcher="srun",
                                                            container_launcher_arguments="--kill-on-bad-exit",
-                                                           glite_arguments="--cpus-per-task=28")
+                                                           glite_arguments="--gpus=v100:1")
         self.transformation_catalog.add_transformations(run_regression_transformation)
 
         # run_inference.py
@@ -271,11 +271,11 @@ class CerebrasPyTorchWorkflow:
             pfn=f"{BASE_DIR}/executables/step3/run_inference.sh",
             is_stageable=True,
         )
-        run_inference_transformation.add_pegasus_profiles(cores=1, runtime="300",
+        run_inference_transformation.add_pegasus_profiles(cores=5, runtime="300",
                                                           queue="GPU-shared", gpus=1,
                                                           container_launcher="srun",
                                                           container_launcher_arguments="--kill-on-bad-exit",
-                                                          glite_arguments="--cpus-per-task=28")
+                                                          glite_arguments="--gpus=v100:1")
         self.transformation_catalog.add_transformations(run_inference_transformation)
 
     # --- Replica Catalog ----------------------------------------------------------
