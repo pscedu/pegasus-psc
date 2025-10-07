@@ -9,4 +9,4 @@ tar xvzf pretrain_OCELOT__pretrain_MS_0_0001__model_pretrain.tgz
 tar xvzf regression_OCELOT__ms_OCELOT.tgz
 
 # TODO: Run the "create_regression_csv.py" and "run_roberta.py" steps before running this one. The dirs mentioned in the YAML require on that step finishing.
-python3 run_regression.py --mode train --is_pretrained_checkpoint --checkpoint_path pretrain_OCELOT/pretrain_MS_0.0001/model_pretrain/checkpoint_3000.mdl --params regression_params.yaml --model_dir ${ENTRY_LOCATION}/regression_OCELOT/ms_OCELOT
+python3 run_regression.py --mode train --is_pretrained_checkpoint --checkpoint_path pretrain_OCELOT/pretrain_MS_0.0001/model_pretrain/checkpoint_3000.mdl --params regression_params.yaml --model_dir regression_OCELOT/ms_OCELOT
