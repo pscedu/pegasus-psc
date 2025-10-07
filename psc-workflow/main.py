@@ -357,7 +357,7 @@ class CerebrasPyTorchWorkflow:
         csv_val_tar = File("csv_val.tgz")
         csv_test_tar = File("csv_test.tgz")
 
-        roberta_params_yaml_input_file = File("roberta_params_yaml_input_file")
+        roberta_params_yaml_input_file = File("roberta_params_OCELOT_MS.yaml")
         self.replica_catalog.add_replica(
             site="local", lfn=roberta_params_yaml_input_file.lfn,
             pfn=f"{BASE_DIR}/inputs/step1/roberta_params_OCELOT_MS.yaml"
@@ -402,7 +402,7 @@ class CerebrasPyTorchWorkflow:
         ### Files
         # TODO: Connect by untarring before accessing the file from model_pretrain_output_tar in .sh file
         # f"{ENTRY_LOCATION}/pretrain_OCELOT/pretrain_MS_0.0001/model_pretrain/checkpoint_3000.mdl"
-        regression_params_yaml_input_file = File("regression_params_yaml_input_file")
+        regression_params_yaml_input_file = File("regression_params.yaml")
         self.replica_catalog.add_replica(
             site="local", lfn=regression_params_yaml_input_file.lfn,
             pfn=f"{BASE_DIR}/inputs/step2/regression_params.yaml"
